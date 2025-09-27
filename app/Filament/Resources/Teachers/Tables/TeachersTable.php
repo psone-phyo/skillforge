@@ -22,21 +22,20 @@ class TeachersTable
                 TextColumn::make('id')->sortable(),
                 TextColumn::make('user.name')->label('Teacher Name')->sortable(),
                 TextColumn::make('user.email')->label('Email'),
-                BadgeColumn::make('status')
-                    ->colors([
-                        'primary' => 'pending',
-                        'success' => 'approved',
-                        'danger' => 'rejected',
-                        'warning' => 'suspended',
-                    ]),
                 ImageColumn::make('profile')
                     ->label('Profile Image')
                     ->disk('r2')
                     ->rounded()
                     ->height(50)
                     ->width(50),
-                TextColumn::make('status')
-                    ->badge(),
+                BadgeColumn::make('status')
+    ->colors([
+        'primary' => 'pending',
+        'success' => 'approved',
+        'danger' => 'rejected',
+        'warning' => 'suspended',
+    ]),
+
                 TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()

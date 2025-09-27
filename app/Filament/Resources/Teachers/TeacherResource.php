@@ -9,6 +9,7 @@ use App\Filament\Resources\Teachers\Pages\ViewTeacher;
 use App\Filament\Resources\Teachers\Schemas\TeacherForm;
 use App\Filament\Resources\Teachers\Schemas\TeacherInfolist;
 use App\Filament\Resources\Teachers\Tables\TeachersTable;
+use App\Filament\Widgets\TeacherStatusOverview;
 use App\Models\Teacher;
 use App\Models\User;
 use BackedEnum;
@@ -56,4 +57,12 @@ class TeacherResource extends Resource
             'edit' => EditTeacher::route('/{record}/edit'),
         ];
     }
+
+    public static function getWidgets(): array
+    {
+        return [
+            TeacherStatusOverview::class,
+        ];
+    }
+
 }
