@@ -12,15 +12,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create(Table::INSTRUCTOR, function (Blueprint $table) {
+        Schema::create(Table::STUDENT, function (Blueprint $table) {
             $table->id();
-            $table->unsignedSmallInteger('user_id');
-            $table->integer('proposal_id')->nullable();
-            $table->string('title')->nullable();
+            $table->integer('user_id');
+            $table->integer('interest_id')->nullable();
             $table->longText('bio')->nullable();
-            $table->longText('profile_url')->nullable();
-            $table->enum('status', ['pending', 'approved', 'rejected', 'suspended'])
-                    ->default('pending');
+            $table->text('profile_url')->nullable();
             $table->timestamps();
             $table->softDeletes();
         });
@@ -31,6 +28,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists(Table::INSTRUCTOR);
+        Schema::dropIfExists(Table::STUDENT);
     }
 };

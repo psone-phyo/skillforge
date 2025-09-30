@@ -25,6 +25,7 @@ class User extends Authenticatable
         'email',
         'password',
         'email_verified_at',
+        'status',
     ];
 
     /**
@@ -50,12 +51,24 @@ class User extends Authenticatable
         ];
     }
 
+    public function instructor(){
+        return $this->hasOne(Instructor::class, 'user_id');
+    }
+
+    public function student(){
+        return $this->hasOne(Student::class, 'user_id');
+    }
+
     public function canAccessPanel(\Filament\Panel $panel): bool
     {
         return $this->hasRole('admin');
     }
 
-    public function teacher(){
-        return $this->hasOne(Teacher::class, 'user_id');
+    public function isInstructor(){
+        return $this->instructor ?? false;
+    }
+
+    public function isStudent(){
+        return $this->student ?? false;
     }
 }
