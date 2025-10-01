@@ -3,9 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Course extends Model
 {
+        use SoftDeletes;
+
     protected $fillable = [
         'instructor_id',
         'title',
@@ -22,5 +25,6 @@ class Course extends Model
         'price',
         'status',
         'published_at',
+        'course_code',
     ];
 }

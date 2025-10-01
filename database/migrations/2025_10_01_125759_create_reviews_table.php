@@ -12,18 +12,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create(Table::ENROLLMENT, function (Blueprint $table) {
+        Schema::create(Table::REVIEW, function (Blueprint $table) {
             $table->id();
             $table->integer('user_id');
             $table->integer('course_id');
-            $table->text('ref');
-            $table->text('transaction_url')->nullable();
-            $table->text('transaction_number')->nullable();
-            $table->text('course_fee');
-            $table->text('comission');
-            $table->text('total_amount');
-            $table->text('payment_method');
-            $table->timestamp('purchased_at')->nullable();
+            $table->integer('rating');
+            $table->longText('comment');
             $table->timestamps();
             $table->softDeletes();
         });
@@ -34,6 +28,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists(Table::ENROLLMENT);
+        Schema::dropIfExists(Table::REVIEW);
     }
 };

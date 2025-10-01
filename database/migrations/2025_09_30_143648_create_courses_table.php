@@ -15,6 +15,7 @@ return new class extends Migration
         Schema::create(Table::COURSE, function (Blueprint $table) {
             $table->id();
             $table->integer('instructor_id');
+            $table->string('course_code');
             $table->string('title');
             $table->string('mm_title');
             $table->string('slug');
@@ -25,7 +26,7 @@ return new class extends Migration
             $table->enum('level', ['basic', 'intermediate', 'advanced']);
             $table->enum('language', ['Myanmar','English']);
             $table->text('thumbnail_url')->nullable();
-            $table->boolean('is_paid');
+            $table->boolean('is_paid')->default(0);
             $table->double('price')->nullable();
             $table->enum('status', ['on_progress', 'finished', 'published', 'inactive']);
             $table->timestamp('published_at')->nullable();

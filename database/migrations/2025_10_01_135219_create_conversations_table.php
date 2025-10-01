@@ -12,10 +12,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table(Table::USER, function (Blueprint $table) {
-            $table->string('provider')->after('password')->nullable();
-            $table->text('provider_id')->after('provider')->nullable();
-
+        Schema::create(Table::CONVERSATION, function (Blueprint $table) {
+            $table->id();
+            $table->integer('user_one_id');
+            $table->integer('user_two_id');
+            $table->timestamps();
+            $table->softDeletes();
         });
     }
 
@@ -24,9 +26,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table(Table::USER, function (Blueprint $table) {
-            $table->dropColumn('provider');
-            $table->dropColumn('provider_id');
-        });
+        Schema::dropIfExists(Table::CONVERSATION);
     }
 };

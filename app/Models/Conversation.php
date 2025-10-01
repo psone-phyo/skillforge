@@ -4,10 +4,10 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class Enrollment extends Model
+class Conversation extends Model
 {
     protected $fillable = [
-        'user_id',
-        'course_id'
+        'user_one_id',
+        'user_two_id',
     ];
 }

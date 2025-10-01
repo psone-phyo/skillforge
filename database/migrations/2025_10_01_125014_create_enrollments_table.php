@@ -12,10 +12,10 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table(Table::USER, function (Blueprint $table) {
-            $table->string('provider')->after('password')->nullable();
-            $table->text('provider_id')->after('provider')->nullable();
-
+        Schema::create(Table::ENROLLMENT, function (Blueprint $table) {
+            $table->id();
+            $table->integer('user_id');
+            $table->integer('course_id');
         });
     }
 
@@ -24,9 +24,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table(Table::USER, function (Blueprint $table) {
-            $table->dropColumn('provider');
-            $table->dropColumn('provider_id');
-        });
+        Schema::dropIfExists(Table::ENROLLMENT);
     }
 };

@@ -5,18 +5,15 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-class Proposal extends Model
+class quiz extends Model
 {
         use SoftDeletes;
 
     protected $fillable = [
+        'course_id',
         'instructor_id',
-        'proposal',
-        'cv',
-        'category_id',
+        'title',
+        'mm_title',
+        'passing_score',
     ];
-
-    public function user(){
-        return $this->belongsTo(Instructor::class, 'instructor_id');
-    }
 }
