@@ -123,7 +123,7 @@ class InstructorResource extends Resource
                             ->label('Bio')
                             ->default($record->bio)
 
-                        
+
                     ]),
                 Action::make('Approve')
                     ->badge()

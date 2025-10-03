@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Course extends Model
 {
-        use SoftDeletes;
+    use SoftDeletes;
 
     protected $fillable = [
         'instructor_id',
@@ -27,4 +27,9 @@ class Course extends Model
         'published_at',
         'course_code',
     ];
+
+    public function tags()
+    {
+        return $this->belongsToMany(Tag::class, 'course_tags', 'course_id', 'tag_id');
+    }
 }
