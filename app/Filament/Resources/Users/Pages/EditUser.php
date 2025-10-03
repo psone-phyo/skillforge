@@ -22,4 +22,8 @@ class EditUser extends EditRecord
             RestoreAction::make(),
         ];
     }
+
+    public function afterSave(){
+        return redirect($this->getResource()::getUrl('index'));
+    }
 }

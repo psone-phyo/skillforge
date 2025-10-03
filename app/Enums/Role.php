@@ -2,14 +2,14 @@
 namespace App\Enums;
 
 class Role{
-    CONST ID_ADMIN = 'admin';
+    CONST ID_ADMIN = 'super_admin';
     CONST ID_STAFF = 'staff';
-    CONST ID_TEACHER = 'teacher';
+    CONST ID_TEACHER = 'instructor';
     CONST ID_STUDENT = 'student';
 
     CONST ADMIN = 'Admin';
     CONST STAFF = 'Staff';
-    CONST TEACHER = 'Teacher';
+    CONST TEACHER = 'Instructor';
     CONST STUDENT = 'Student';
 
     CONST AVAILABLES = [

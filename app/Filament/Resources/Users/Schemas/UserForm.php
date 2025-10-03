@@ -2,12 +2,14 @@
 
 namespace App\Filament\Resources\Users\Schemas;
 
+use App\Enums\Role;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Schema;
+use Illuminate\Support\Str;
 
 class UserForm
 {
@@ -20,7 +22,7 @@ class UserForm
                 TextInput::make('email')
                     ->label('Email address')
                     ->email()
-                    ->unique() 
+                    ->unique()
                     ->required(),
                 TextInput::make('password')
                     ->password()
@@ -43,6 +45,14 @@ class UserForm
                         '0' => 'Inactive',
                     ])
                     ->required(),
+                Select::make('role')
+                    ->label('Role')
+                    ->options(Role::AVAILABLES)
+                    ->afterStateHydrated(fn ($set, $record) =>
+                        $set('role', $record?->roles->first()?->name)
+                    )
+                        ->disabled(fn ($livewire) => $livewire instanceof \Filament\Resources\Pages\EditRecord)
+
             ]);
     }
 }
