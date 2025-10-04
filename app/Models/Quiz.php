@@ -5,7 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-class quiz extends Model
+class Quiz extends Model
 {
         use SoftDeletes;
 
@@ -16,4 +16,14 @@ class quiz extends Model
         'mm_title',
         'passing_score',
     ];
+
+    public function course()
+    {
+        return $this->belongsTo(Course::class);
+    }
+
+    public function quizQuestions()
+    {
+        return $this->hasMany(QuizQuestion::class);
+    }
 }
