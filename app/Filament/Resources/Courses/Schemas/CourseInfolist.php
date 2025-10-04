@@ -9,6 +9,8 @@ use Filament\Infolists\Components\IconEntry;
 use Filament\Infolists\Components\ImageEntry;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Schemas\Schema;
+use Illuminate\Support\Facades\Auth as FacadesAuth;
+use Illuminate\Support\HtmlString;
 
 class CourseInfolist
 {
@@ -16,8 +18,8 @@ class CourseInfolist
     {
         return $schema
             ->components([
-                TextEntry::make('instructor_id')
-                    ->numeric(),
+                TextEntry::make('instructor.name')
+                    ->visible(fn() => FacadesAuth::user()->hasRole('super_admin')),
                 TextEntry::make('course_code'),
                 TextEntry::make('title'),
                 TextEntry::make('mm_title'),
@@ -58,7 +60,11 @@ class CourseInfolist
                     ->placeholder('-'),
                 TextEntry::make('deleted_at')
                     ->dateTime()
-                    ->visible(fn (Course $record): bool => $record->trashed()),
+                    ->visible(fn(Course $record): bool => $record->trashed()),
+                TextEntry::make('tags')
+                    ->label('Tags')
+                    ->formatStateUsing(fn($state) => $state->name)
+                    ->badge(),
             ]);
     }
 }

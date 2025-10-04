@@ -22,4 +22,17 @@ class EditCourse extends EditRecord
             RestoreAction::make(),
         ];
     }
+
+    protected function getListeners(): array
+    {
+        return [
+            'deleteTag' => 'deleteTag',
+        ];
+    }
+
+    public function deleteTag($tagId)
+    {
+        $this->record->tags->detach($tagId);
+        $this->dispatchBrowserEvent('notify', ['message' => 'Tag deleted']);
+    }
 }

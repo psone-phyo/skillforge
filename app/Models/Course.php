@@ -32,4 +32,9 @@ class Course extends Model
     {
         return $this->belongsToMany(Tag::class, 'course_tags', 'course_id', 'tag_id');
     }
+
+    public function instructor()
+    {
+        return $this->belongsTo(User::class, 'instructor_id');
+    }
 }

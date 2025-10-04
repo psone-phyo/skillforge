@@ -1,5 +1,7 @@
 <?php
 
+use App\Models\Course;
+use App\Models\Tag;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
@@ -25,3 +27,9 @@ Route::get('/teacher/cv/{filename}', function ($filename) {
 
 require __DIR__ . '/settings.php';
 require __DIR__ . '/auth.php';
+
+// web.php
+Route::delete('/courses/{course}/tags/{tag}', function(Course $course, $tag){
+    $course->tags()->detach($tag);
+    return back()->with('success', 'Tag removed!');
+})->name('courses.detach-tag');

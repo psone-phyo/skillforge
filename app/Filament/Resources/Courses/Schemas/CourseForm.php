@@ -54,7 +54,7 @@ class CourseForm
                     ->required(fn($get) => $get('is_paid'))
                     ->default(null),
                 TagsInput::make('tags')
-                    ->default(null),
+                    ->visible(fn($record) => $record == null),
             ]);
     }
 }
