@@ -68,6 +68,7 @@ return [
             'bucket' => env('R2_BUCKET'),
             'endpoint' => env('R2_ENDPOINT'),
             'use_path_style_endpoint' => true,
+            'url' => env('R2_URL', 'https://pub-d15eb47c448447b9936d308e5e4225f9.r2.dev/'),
         ],
     ],
 

@@ -17,6 +17,8 @@ use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\HtmlString;
 
@@ -25,6 +27,11 @@ class CoursesTable
     public static function configure(Table $table): Table
     {
         return $table
+        ->modifyQueryUsing(function (Builder $query) {
+                $query->whereHas('instructor', function ($q) {
+                    $q->where('id', Auth::id());
+                });
+            })
             ->columns([
                 TextColumn::make('instructor_id')
                     ->numeric()

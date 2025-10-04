@@ -19,4 +19,9 @@ class Lesson extends Model
         'is_locked',
         'sort',
     ];
+
+    public function course()
+    {
+        return $this->belongsTo(Course::class, 'course_id');
+    }
 }
