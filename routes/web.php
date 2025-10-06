@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Frontend\DashboardController;
 use App\Models\Course;
 use App\Models\Tag;
 use Illuminate\Support\Facades\Route;
@@ -7,12 +8,14 @@ use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 
 Route::get('/', function () {
-    return Inertia::render('Welcome');
+    return to_route('dashboard');
 })->name('home');
 
-Route::get('dashboard', function () {
-    return Inertia::render('Dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
+// Route::get('dashboard', function () {
+//     return Inertia::render('Dashboard');
+// })->middleware(['auth', 'verified'])->name('dashboard');
+
+Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
 Route::get('/teacher/cv/{filename}', function ($filename) {
     $path = "private/{$filename}";
@@ -33,3 +36,5 @@ Route::delete('/courses/{course}/tags/{tag}', function(Course $course, $tag){
     $course->tags()->detach($tag);
     return back()->with('success', 'Tag removed!');
 })->name('courses.detach-tag');
+
+Route::get('/course/{id}', [DashboardController::class, 'show'])->name('course-details');

@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Learning Forum LMS — Landing (Export PNG)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --bg:#0f1320;
+      --card:#151A2D;
+      --muted:#8F9BB3;
+      --text:#E6EAF5;
+      --primary:#5B8CFF;
+      --primary-2:#7B61FF;
+      --accent:#42E3B4;
+      --chip:#1C2340;
+      --surface:#0B0F1B;
+      --shadow: 0 10px 30px rgba(0,0,0,0.35), 0 2px 6px rgba(0,0,0,0.2);
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+      background:
+        radial-gradient(1200px 800px at -10% -20%, rgba(91,140,255,0.25), transparent 60%),
+        radial-gradient(900px 700px at 110% 20%, rgba(66,227,180,0.15), transparent 55%),
+        linear-gradient(180deg, #0e1220 0%, #0a0f1a 100%);
+      color:var(--text);
+    }
+
+    /* Header */
+    .header{
+      position:sticky;top:0;z-index:40;
+      backdrop-filter: saturate(1.2) blur(10px);
+      background:linear-gradient(180deg, rgba(10,15,26,0.9) 0%, rgba(10,15,26,0.5) 100%);
+      border-bottom:1px solid rgba(255,255,255,0.06);
+    }
+    .wrap{max-width:1200px;margin:0 auto;padding:16px 20px}
+    .nav{display:flex;align-items:center;gap:16px;justify-content:space-between;}
+    .brand{display:flex;align-items:center;gap:10px;font-weight:800;letter-spacing:.2px}
+    .brand .logo{
+      width:36px;height:36px;border-radius:10px;
+      background:conic-gradient(from 220deg, var(--primary), var(--primary-2), var(--accent), var(--primary));
+      box-shadow: 0 6px 18px rgba(91,140,255,0.45), inset 0 0 20px rgba(255,255,255,0.06);
+    }
+    .nav-actions{display:flex;align-items:center;gap:10px}
+    .btn{
+      border:1px solid rgba(255,255,255,0.1);
+      background:linear-gradient(180deg, #1b2240, #141b33);
+      color:var(--text);padding:10px 14px;border-radius:10px;cursor:pointer;
+      transition: all .2s ease; font-weight:600;
+    }
+    .btn:hover{transform:translateY(-1px);box-shadow:var(--shadow)}
+    .btn.pill{border-radius:999px;padding:10px 16px}
+    .avatar{width:36px;height:36px;border-radius:50%;background:url('https://images.unsplash.com/photo-1527980965255-d3b416303d12?q=80&amp;w=300&amp;auto=format&amp;fit=crop') center/cover;border:2px solid rgba(255,255,255,0.12)}
+
+    /* Hero */
+    .hero{padding:48px 20px 24px}
+    .hero-grid{max-width:1200px;margin:0 auto;display:grid;grid-template-columns:1.2fr .8fr;gap:24px}
+    .hero-left{
+      background:linear-gradient(180deg, rgba(27,34,64,0.9), rgba(20,27,51,0.9));
+      border:1px solid rgba(255,255,255,0.06);
+      border-radius:18px;padding:28px;box-shadow:var(--shadow);
+    }
+    .eyebrow{color:var(--accent);font-weight:700;letter-spacing:.3px;margin-bottom:8px}
+    h1{margin:0 0 10px;font-size:36px;line-height:1.15}
+    .sub{color:var(--muted);margin-bottom:18px}
+    .search{display:flex;align-items:center;gap:10px;background:#0f152c;border:1px solid rgba(255,255,255,0.06);border-radius:14px;padding:10px 12px}
+    .search input{flex:1;background:transparent;border:none;outline:none;color:var(--text);font-size:15px}
+    .search .kbd{background:#0b1024;border:1px solid rgba(255,255,255,0.08);color:#AAB3D0;padding:6px 8px;border-radius:8px;font-size:12px}
+    .chips{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}
+    .chip{
+      background:var(--chip);border:1px solid rgba(255,255,255,0.06);
+      color:#C3CCF3;padding:8px 12px;border-radius:999px;font-weight:600;font-size:13px;cursor:pointer;transition:all .15s;
+    }
+    .chip.active, .chip:hover{background:linear-gradient(180deg, #1f2958, #182145);color:#fff}
+
+    .hero-right{display:grid;grid-template-rows:auto 1fr;gap:14px}
+    .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+    .stat{background:linear-gradient(180deg, #1b2240, #141b33);border:1px solid rgba(255,255,255,0.06);border-radius:14px;padding:14px;text-align:center;box-shadow:var(--shadow)}
+    .stat b{display:block;font-size:18px}
+    .preview{background:linear-gradient(180deg, #1b2240, #141b33);border:1px solid rgba(255,255,255,0.06);border-radius:14px;padding:16px;display:grid;grid-template-columns:100px 1fr;gap:12px;align-items:center}
+    .preview .thumb{width:100px;height:68px;border-radius:10px;background:url('https://images.unsplash.com/photo-1518779578993-ec3579fee39f?q=80&amp;w=600&amp;auto=format&amp;fit=crop') center/cover;border:1px solid rgba(255,255,255,0.06)}
+    .preview h3{margin:0 0 6px;font-size:16px}
+    .preview p{margin:0;color:var(--muted);font-size:13px}
+
+    /* Content section */
+    .content{padding:12px 20px 90px}
+    .content-wrap{max-width:1200px;margin:0 auto}
+    .section-head{display:flex;align-items:center;justify-content:space-between;margin:12px 0 10px}
+    .section-head h2{margin:0;font-size:20px}
+    .view-all{color:#AFC7FF;text-decoration:none;font-weight:600}
+
+    .video-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+    .card{
+      background:linear-gradient(180deg, #1b2240, #141b33);
+      border:1px solid rgba(255,255,255,0.06);
+      border-radius:16px;overflow:hidden;box-shadow:var(--shadow);
+      display:flex;flex-direction:column;min-height:220px
+    }
+    .card .media{position:relative;height:140px;background:#0d1328}
+    .card .media img{width:100%;height:100%;object-fit:cover;display:block;filter:saturate(1.05) contrast(1.02)}
+    .card .media .badge{position:absolute;left:10px;top:10px;background:rgba(10,15,26,0.7);backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,0.12);color:#D9E2FF;border-radius:999px;padding:4px 8px;font-size:12px}
+    .card .body{padding:12px 12px 14px;display:flex;gap:10px}
+    .card .body .vthumb{width:34px;height:34px;border-radius:8px;background:#0b1024;flex:0 0 auto;border:1px solid rgba(255,255,255,0.08)}
+    .meta{flex:1}
+    .meta .title{font-weight:700;margin:0 0 4px;font-size:14px}
+    .meta .sub{color:#9AA6D7;font-size:12px;margin:0;display:flex;gap:10px;align-items:center}
+    .meta .sub .dot{width:4px;height:4px;background:#42508a;border-radius:50%}
+    .actions{display:flex;align-items:center;gap:8px}
+    .actions .icon-btn{background:#101737;border:1px solid rgba(255,255,255,0.08);color:#C7D3FF;width:34px;height:34px;border-radius:10px;display:grid;place-items:center;cursor:pointer}
+    .like.active{color:#FF6B9A;border-color:rgba(255,107,154,0.4)}
+
+    /* Chat widget (preview) */
+    .chat{position:fixed;right:20px;bottom:20px;z-index:50;width:320px;max-width:calc(100% - 40px);}
+    .chat .window{background:linear-gradient(180deg, #1b2240, #141b33);border:1px solid rgba(255,255,255,0.08);border-radius:16px;overflow:hidden;box-shadow:var(--shadow);transform-origin: 100% 100%;transform: scale(0.98);transition: transform .18s ease, opacity .18s ease, height .2s ease;opacity:.98;}
+    .chat.collapsed .window{height:0;opacity:0;transform: scale(0.9);pointer-events:none}
+    .chat-header{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-bottom:1px solid rgba(255,255,255,0.06)}
+    .chat-messages{max-height:230px;overflow:auto;padding:12px;display:flex;flex-direction:column;gap:10px}
+    .bubble{max-width:82%;padding:10px 12px;border-radius:14px;font-size:13px;line-height:1.35;border:1px solid rgba(255,255,255,0.08)}
+    .bubble.me{align-self:flex-end;background:#0f1740}
+    .bubble.you{align-self:flex-start;background:#101733}
+    .chat-input{display:flex;gap:8px;padding:10px;border-top:1px solid rgba(255,255,255,0.06)}
+    .chat-input input{flex:1;background:#0b1024;border:1px solid rgba(255,255,255,0.08);border-radius:12px;color:var(--text);padding:10px 12px;outline:none}
+    .send-btn{background:linear-gradient(180deg, var(--primary), var(--primary-2));border:1px solid rgba(255,255,255,0.2);border-radius:12px;padding:10px 12px;cursor:pointer;font-weight:700}
+
+    /* Floating Button */
+    .fab{position:fixed;right:24px;bottom:24px;z-index:60;width:56px;height:56px;border-radius:50%;display:grid;place-items:center;background:conic-gradient(from 200deg, var(--primary), var(--primary-2), var(--accent), var(--primary));border:1px solid rgba(255,255,255,0.18);box-shadow: 0 12px 30px rgba(91,140,255,.45), inset 0 0 20px rgba(255,255,255,.06);color:white;font-weight:800;cursor:pointer;transition:transform .15s ease;}
+    .fab:hover{transform: translateY(-2px) scale(1.02)}
+
+    /* Export PNG button */
+    .export-btn{
+      position:fixed;left:24px;bottom:24px;z-index:70;
+      background:linear-gradient(180deg, #1b2240, #141b33);
+      border:1px solid rgba(255,255,255,0.18);color:#E6EAF5;
+      padding:10px 14px;border-radius:12px;font-weight:700;cursor:pointer;box-shadow:var(--shadow);
+    }
+
+    /* Profile Edit Modal (kept for parity) */
+    .modal{position:fixed;inset:0;background:rgba(4,6,12,0.6);display:none;align-items:center;justify-content:center;padding:20px;z-index:70;backdrop-filter: blur(6px);}
+    .modal.open{display:flex}
+    .modal-card{width:520px;max-width:100%;background:linear-gradient(180deg, #1b2240, #141b33);border:1px solid rgba(255,255,255,0.08);border-radius:16px;box-shadow:var(--shadow);overflow:hidden;}
+    .modal-head{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid rgba(255,255,255,0.06)}
+    .modal-body{padding:16px;display:grid;gap:12px}
+    .field label{display:block;font-size:12px;color:#A9B5DA;margin-bottom:6px}
+    .field input, .field textarea, .field select{width:100%;background:#0b1024;border:1px solid rgba(255,255,255,0.1);border-radius:12px;color:var(--text);padding:10px 12px;outline:none;font-size:14px}
+    .modal-actions{display:flex;justify-content:flex-end;gap:8px;padding:12px 16px;border-top:1px solid rgba(255,255,255,0.06)}
+
+    /* Spacer */
+    .footer-spacer{height:120px}
+
+    /* Responsive */
+    @media (max-width: 1100px){.video-grid{grid-template-columns:repeat(3,1fr)}}
+    @media (max-width: 860px){.hero-grid{grid-template-columns:1fr;gap:16px}.video-grid{grid-template-columns:repeat(2,1fr)}}
+    @media (max-width: 560px){.video-grid{grid-template-columns:1fr}.brand .hide-sm{display:none}}
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <header class="header">
+    <div class="wrap">
+      <nav class="nav">
+        <div class="brand">
+          <div class="logo" aria-hidden="true"></div>
+          <div>
+            <div>Learning Forum</div>
+            <small style="color:#98A4CD">LMS</small>
+          </div>
+        </div>
+        <div class="nav-actions">
+          <button class="btn pill" id="openProfile">Edit Profile</button>
+          <button class="btn pill">My Courses</button>
+          <div class="avatar" title="Profile"></div>
+        </div>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Hero -->
+  <section class="hero">
+    <div class="hero-grid">
+      <div class="hero-left">
+        <div class="eyebrow">Learn, Discuss, Grow</div>
+        <h1>Search courses and videos by topic, skill, or mentor</h1>
+        <p class="sub">Join the community. Watch concise lessons, ask questions, and get feedback.</p>
+
+        <div class="search">
+          <svg width="18" height="18" fill="#A6B3E8" viewBox="0 0 24 24" aria-hidden="true"><path d="M15.5 14h-.79l-.28-.27a6.471 6.471 0 0 0 1.57-4.23 6.5 6.5 0 1 0-6.5 6.5 6.471 6.471 0 0 0 4.23-1.57l.27.28v.79l5 5L20.49 19l-5-5Zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14Z"/></svg>
+          <input id="searchInput" placeholder="Try: React hooks, Linear Regression, UI animations..." />
+          <span class="kbd">/</span>
+          <button class="btn">Search</button>
+        </div>
+
+        <div class="chips" id="chipRow">
+          <div class="chip active">All</div>
+          <div class="chip">Programming</div>
+          <div class="chip">Data Science</div>
+          <div class="chip">Design</div>
+          <div class="chip">Marketing</div>
+          <div class="chip">DevOps</div>
+          <div class="chip">AI/ML</div>
+        </div>
+      </div>
+
+      <div class="hero-right">
+        <div class="stats">
+          <div class="stat">
+            <small class="muted">Courses</small>
+            <b>1,248</b>
+          </div>
+          <div class="stat">
+            <small class="muted">Videos</small>
+            <b>15,930</b>
+          </div>
+          <div class="stat">
+            <small class="muted">Learners</small>
+            <b>72k+</b>
+          </div>
+        </div>
+        <div class="preview">
+          <div class="thumb"></div>
+          <div>
+            <h3>Recommended: Modern React Patterns</h3>
+            <p>Advanced hooks, server components, and performance practices.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Videos -->
+  <section class="content">
+    <div class="content-wrap">
+      <div class="section-head">
+        <h2>Trending Videos</h2>
+        <a class="view-all" href="#">View all</a>
+      </div>
+
+      <div class="video-grid" id="videoGrid">
+        <div class="card">
+          <div class="media">
+            <img src="https://images.unsplash.com/photo-1519389950473-47ba0277781c?q=80&amp;w=1200&amp;auto=format&amp;fit=crop" alt="Course thumbnail">
+            <div class="badge">Programming</div>
+          </div>
+          <div class="body">
+            <div class="vthumb"></div>
+            <div class="meta">
+              <div class="title">Node.js API Design — Clean Architecture</div>
+              <div class="sub"><span>42m</span><span class="dot"></span><span>by Alex R.</span></div>
+            </div>
+            <div class="actions">
+              <button class="icon-btn like" title="Like">❤</button>
+              <button class="icon-btn" title="Save">★</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="media">
+            <img src="https://images.unsplash.com/photo-1520607162513-77705c0f0d4a?q=80&amp;w=1200&amp;auto=format&amp;fit=crop" alt="Course thumbnail">
+            <div class="badge">Design</div>
+          </div>
+          <div class="body">
+            <div class="vthumb"></div>
+            <div class="meta">
+              <div class="title">Design Systems — Tokens, Grids, and Accessibility</div>
+              <div class="sub"><span>27m</span><span class="dot"></span><span>by Maya T.</span></div>
+            </div>
+            <div class="actions">
+              <button class="icon-btn like">❤</button>
+              <button class="icon-btn">★</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="media">
+            <img src="https://images.unsplash.com/photo-1498050108023-c5249f4df085?q=80&amp;w=1200&amp;auto=format&amp;fit=crop" alt="Course thumbnail">
+            <div class="badge">AI/ML</div>
+          </div>
+          <div class="body">
+            <div class="vthumb"></div>
+            <div class="meta">
+              <div class="title">Intro to Transformers — Attention in Practice</div>
+              <div class="sub"><span>35m</span><span class="dot"></span><span>by Sam K.</span></div>
+            </div>
+            <div class="actions">
+              <button class="icon-btn like">❤</button>
+              <button class="icon-btn">★</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="media">
+            <img src="https://images.unsplash.com/photo-1487014679447-9f8336841d58?q=80&amp;w=1200&amp;auto=format&amp;fit=crop" alt="Course thumbnail">
+            <div class="badge">Data Science</div>
+          </div>
+          <div class="body">
+            <div class="vthumb"></div>
+            <div class="meta">
+              <div class="title">Pandas Tricks — Faster Data Exploration</div>
+              <div class="sub"><span>19m</span><span class="dot"></span><span>by Irene P.</span></div>
+            </div>
+            <div class="actions">
+              <button class="icon-btn like">❤</button>
+              <button class="icon-btn">★</button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="footer-spacer"></div>
+    </div>
+  </section>
+
+  <!-- Chat Widget -->
+  <div class="chat collapsed" id="chat">
+    <div class="window">
+      <div class="chat-header">
+        <div class="left">
+          <div class="dot" style="width:10px;height:10px;border-radius:50%;background:var(--accent);box-shadow:0 0 10px var(--accent)"></div>
+          <div>
+            <div style="font-weight:700">Forum Chat</div>
+            <small style="color:#9AABD7">Ask a mentor or peers</small>
+          </div>
+        </div>
+        <button class="btn pill" id="minimizeChat" style="padding:6px 10px">–</button>
+      </div>
+      <div class="chat-messages" id="chatMessages">
+        <div class="bubble you">Welcome! Need help finding a course?</div>
+        <div class="bubble me">Looking for React performance tips.</div>
+        <div class="bubble you">Try "Modern React Patterns" in Trending.</div>
+      </div>
+      <div class="chat-input">
+        <input id="chatInput" placeholder="Write a message..."/>
+        <button class="send-btn" id="sendBtn">Send</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Floating Action Button -->
+  <button class="fab" id="fab" title="Quick actions">＋</button>
+
+  <!-- Profile Modal -->
+  <div class="modal" id="profileModal" aria-hidden="true">
+    <div class="modal-card">
+      <div class="modal-head">
+        <div style="font-weight:800">Edit Profile</div>
+        <button class="btn pill" id="closeProfile">Close</button>
+      </div>
+      <div class="modal-body">
+        <div class="field">
+          <label>Display Name</label>
+          <input placeholder="Your name"/>
+        </div>
+        <div class="field">
+          <label>Headline</label>
+          <input placeholder="E.g. Product Designer, Data Scientist"/>
+        </div>
+        <div class="field">
+          <label>Bio</label>
+          <textarea rows="3" placeholder="Tell others about your learning goals..."></textarea>
+        </div>
+        <div class="field">
+          <label>Interests</label>
+          <select>
+            <option>Programming</option>
+            <option>Data Science</option>
+            <option>Design</option>
+            <option>Marketing</option>
+            <option>DevOps</option>
+            <option>AI/ML</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn">Cancel</button>
+        <button class="btn" style="background:linear-gradient(180deg, var(--primary), var(--primary-2)); border-color:rgba(255,255,255,0.25)">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Export button -->
+  <button class="export-btn" id="exportBtn">Export PNG</button>
+
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+  <script>
+    // Keyboard focus for search
+    document.addEventListener('keydown', (e) => {
+      if (e.key === '/' && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+        e.preventDefault();
+        document.getElementById('searchInput').focus();
+      }
+    });
+
+    // Chips toggle
+    const chipRow = document.getElementById('chipRow');
+    chipRow.addEventListener('click', (e) => {
+      const c = e.target.closest('.chip');
+      if (!c) return;
+      [...chipRow.querySelectorAll('.chip')].forEach(x => x.classList.remove('active'));
+      c.classList.add('active');
+    });
+
+    // Like buttons
+    document.querySelectorAll('.like').forEach(btn => {
+      btn.addEventListener('click', () => btn.classList.toggle('active'));
+    });
+
+    // Chat widget
+    const chat = document.getElementById('chat');
+    const fab = document.getElementById('fab');
+    const minimizeChat = document.getElementById('minimizeChat');
+    fab.addEventListener('click', () => {
+      chat.classList.toggle('collapsed');
+    });
+    minimizeChat.addEventListener('click', () => {
+      chat.classList.add('collapsed');
+    });
+    const sendBtn = document.getElementById('sendBtn');
+    const chatInput = document.getElementById('chatInput');
+    const chatMessages = document.getElementById('chatMessages');
+    function sendMessage(){
+      const v = chatInput.value.trim();
+      if(!v) return;
+      const b = document.createElement('div');
+      b.className = 'bubble me';
+      b.textContent = v;
+      chatMessages.appendChild(b);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+      chatInput.value = '';
+    }
+    sendBtn.addEventListener('click', sendMessage);
+    chatInput.addEventListener('keydown', (e)=>{ if(e.key==='Enter') sendMessage(); });
+
+    // Profile modal
+    const pm = document.getElementById('profileModal');
+    document.getElementById('openProfile').addEventListener('click', ()=> pm.classList.add('open'));
+    document.getElementById('closeProfile').addEventListener('click', ()=> pm.classList.remove('open'));
+    pm.addEventListener('click', (e)=> { if(e.target === pm) pm.classList.remove('open'); });
+
+    // Export PNG (hides floating UI while capturing)
+    const exportBtn = document.getElementById('exportBtn');
+    exportBtn.addEventListener('click', async () => {
+      const hideEls = [document.getElementById('fab'), exportBtn, chat];
+      hideEls.forEach(el => el && (el.style.visibility = 'hidden'));
+      try{
+        const canvas = await html2canvas(document.body, {
+          backgroundColor: null,
+          scale: 2, // retina quality
+          windowWidth: 1440
+        });
+        const dataURL = canvas.toDataURL('image/png');
+        const a = document.createElement('a');
+        a.href = dataURL;
+        a.download = 'learning-forum-home.png';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      }finally{
+        hideEls.forEach(el => el && (el.style.visibility = 'visible'));
+      }
+    });
+  </script>
+</body>
+</html>
