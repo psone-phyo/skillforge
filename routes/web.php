@@ -3,11 +3,15 @@
 use App\Http\Controllers\Frontend\DashboardController;
 use App\Models\Course;
 use App\Models\Tag;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 
 Route::get('/', function () {
+    if(!Auth::check()){
+        return Inertia::render('Welcome');
+    }
     return to_route('dashboard');
 })->name('home');
 
@@ -38,3 +42,6 @@ Route::delete('/courses/{course}/tags/{tag}', function(Course $course, $tag){
 })->name('courses.detach-tag');
 
 Route::get('/course/{id}', [DashboardController::class, 'show'])->name('course-details');
+
+//Payment
+Route::post('course/{id}/payments', [DashboardController::class, 'buy'])->name('course.buy');

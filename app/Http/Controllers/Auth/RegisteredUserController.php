@@ -2,7 +2,10 @@
 
 namespace App\Http\Controllers\Auth;
 
+use App\Enums\Role;
 use App\Http\Controllers\Controller;
+use App\Models\Category;
+use App\Models\Student;
 use App\Models\User;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
@@ -20,7 +23,8 @@ class RegisteredUserController extends Controller
      */
     public function create(): Response
     {
-        return Inertia::render('auth/Register');
+        $categories = Category::all();
+        return Inertia::render('auth/Register', compact('categories'));
     }
 
     /**
@@ -33,6 +37,7 @@ class RegisteredUserController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|lowercase|email|max:255|unique:'.User::class,
+            'interest_id' => 'required',
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
 
@@ -41,7 +46,14 @@ class RegisteredUserController extends Controller
             'email' => $request->email,
             'password' => Hash::make($request->password),
         ]);
+        $student = Student::create([
+            'user_id' => $user->id,
+            'interest_id' => $request->interest_id
+        ]);
 
+        if ($student){
+            $user->assignRole(Role::ID_STUDENT);
+        }
         event(new Registered($user));
 
         Auth::login($user);

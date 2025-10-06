@@ -20,5 +20,6 @@ class Payment extends Model
         'total_amount',
         'payment_method',
         'purchased_at',
+        'note'
     ];
 }
