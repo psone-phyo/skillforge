@@ -30,7 +30,9 @@
     },
     "dependencies": {
         "@inertiajs/vue3": "^2.1.0",
+        "@stripe/stripe-js": "^8.0.0",
         "@vueuse/core": "^12.8.2",
+        "axios": "^1.12.2",
         "class-variance-authority": "^0.7.1",
         "clsx": "^2.1.1",
         "dayjs": "^1.11.18",

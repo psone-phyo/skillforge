@@ -9,6 +9,7 @@ import customParseFormat from 'dayjs/plugin/customParseFormat';
 import { ref, onMounted, watch, watchEffect } from 'vue';
 import PlaceholderPattern from '../components/PlaceholderPattern.vue';
 import { usePage } from '@inertiajs/vue3';
+import axios from 'axios'
 
 const page = usePage();
 const successMessage = ref('');
@@ -35,6 +36,8 @@ const props = defineProps<{
     course: any;      // { id, title, tags?, lessons: [{ id, title, video_url, is_locked?, duration?, duration_sec? }] }
     fileUrl: string;  // prefix for relative video URLs
     courseStatus: String;
+    reviews: any;
+    avgRating: Number;
 }>();
 
 // Player state
@@ -142,31 +145,44 @@ function playLesson(lesson: any, index: number) {
 // Reviews (demo)
 const ratingSelect = ref<number>(5);
 const reviewText = ref<string>('');
+const submiteForm = useForm({
+    rating: ratingSelect,
+    review: reviewText,
+    course_id: props.course.id
+});
+
 function submitReview() {
     const stars = ratingSelect.value;
     const text = reviewText.value.trim();
-    if (!text || !reviewsEl.value) return;
-    const node = document.createElement('div');
-    node.className = 'review';
-    node.innerHTML = `
-    <div class="r-avatar" style="background:#0b1024"></div>
-    <div>
-      <div class="r-name">You</div>
-      <div class="r-text"></div>
-    </div>
-    <div class="r-stars"></div>
-  `;
-    node.querySelector('.r-text')!.textContent = text;
-    const s = document.createElement('span');
-    (node.querySelector('.r-stars') as HTMLElement).appendChild(s);
-    renderStars(s, stars);
-    reviewsEl.value!.prepend(node);
-    const current = ratingAvg.value || DEFAULT_RATING;
-    const newAvg = Math.min(5, Math.round(((current + stars) / 2) * 10) / 10);
-    ratingAvg.value = Number(newAvg.toFixed(1));
-    renderStars(summaryStarsEl.value, ratingAvg.value);
-    reviewText.value = ''; ratingSelect.value = 5;
-    showToast('Thanks for your review!');
+    if (stars && text){
+        submiteForm.rating = stars;
+        submiteForm.review = text;
+        submiteForm.post('/add-review', {
+        forceFormData: true,
+    });
+    }
+//     if (!text || !reviewsEl.value) return;
+//     const node = document.createElement('div');
+//     node.className = 'review';
+//     node.innerHTML = `
+//     <div class="r-avatar" style="background:#0b1024"></div>
+//     <div>
+//       <div class="r-name">You</div>
+//       <div class="r-text"></div>
+//     </div>
+//     <div class="r-stars"></div>
+//   `;
+//     node.querySelector('.r-text')!.textContent = text;
+//     const s = document.createElement('span');
+//     (node.querySelector('.r-stars') as HTMLElement).appendChild(s);
+//     renderStars(s, stars);
+//     reviewsEl.value!.prepend(node);
+//     const current = ratingAvg.value || DEFAULT_RATING;
+//     const newAvg = Math.min(5, Math.round(((current + stars) / 2) * 10) / 10);
+//     ratingAvg.value = Number(newAvg.toFixed(1));
+//     renderStars(summaryStarsEl.value, ratingAvg.value);
+//     reviewText.value = ''; ratingSelect.value = 5;
+//     showToast('Thanks for your review!');
 }
 
 // Chat (minimal)
@@ -216,6 +232,23 @@ function submitPayment() {
             showToast('There was an error submitting your payment.');
         },
     });
+}
+
+const stripeProcessing = ref(false);
+
+function submitPaymentWithStripe() {
+    stripeProcessing.value = true;
+    const course_id = props.course?.id
+    const fee = props.course?.price
+
+    axios.post('/stripe/create-payment', { course_id, fee })
+        .then(response => {
+            window.location.href = response.data.url
+        })
+        .catch(error => {
+            console.error('Payment error:', error)
+            alert('Something went wrong while creating payment.')
+        })
 }
 
 // file input handlers
@@ -354,56 +387,36 @@ onMounted(async () => {
                             class="rounded-2xl overflow-hidden border border-white/10 shadow-[0_10px_30px_rgba(0,0,0,0.35),_0_2px_6px_rgba(0,0,0,0.2)]"
                             style="background:linear-gradient(180deg,#1b2240,#141b33);">
                             <div class="flex items-center gap-4 px-4 py-3 border-b border-white/10">
-                                <div class="text-4xl font-extrabold text-white">{{ ratingAvg.toFixed(1) }}</div>
+                                <div class="text-4xl font-extrabold text-white">{{ avgRating.toFixed(1) }}</div>
                                 <div ref="summaryStarsEl" class="inline-flex"></div>
-                                <div class="flex-1 grid gap-1">
-                                    <div class="h-2 rounded-full border border-white/10 overflow-hidden bg-[#0b1024]">
-                                        <span class="block h-full bg-gradient-to-r from-emerald-400 to-blue-400"
-                                            style="width:78%"></span>
-                                    </div>
-                                    <div class="h-2 rounded-full border border-white/10 overflow-hidden bg-[#0b1024]">
-                                        <span class="block h-full bg-gradient-to-r from-emerald-400 to-blue-400"
-                                            style="width:62%"></span>
-                                    </div>
-                                    <div class="h-2 rounded-full border border-white/10 overflow-hidden bg-[#0b1024]">
-                                        <span class="block h-full bg-gradient-to-r from-emerald-400 to-blue-400"
-                                            style="width:28%"></span>
-                                    </div>
-                                </div>
                             </div>
 
                             <div ref="reviewsEl" class="px-4 py-2 divide-y divide-white/10">
-                                <div class="grid grid-cols-[auto_1fr_auto] gap-3 py-3">
+                                <div class=" grid-cols-[auto_1fr_auto] gap-3 py-3" v-for="review in reviews" :key="review.id">
+                                    <div class="flex items-center gap-2 mb-2">
                                     <div
-                                        class="w-9 h-9 rounded-full border border-white/10 bg-[url('https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=300&auto=format&fit=crop')] bg-center bg-cover">
+                                        class="w-9 h-9 rounded-full border border-white/10 bg-center bg-cover"
+                                        >
                                     </div>
                                     <div>
-                                        <div class="text-white font-semibold">Jordan P.</div>
-                                        <div class="text-[#C5CFEE] text-sm">Excellent explanations and practical
-                                            patterns. The free previews
-                                            sold me.</div>
+                                        <div class="text-white font-semibold">{{ review.user.name }}</div>
+
                                     </div>
-                                    <div class="r-stars" data-stars="5"></div>
+                                    </div>
+
+                                    <div class="text-[#C5CFEE] text-sm">{{ review.comment }}</div>
+                                    <div class="r-stars" :data-stars="review.rating"></div>
                                 </div>
-                                <div class="grid grid-cols-[auto_1fr_auto] gap-3 py-3">
-                                    <div
-                                        class="w-9 h-9 rounded-full border border-white/10 bg-[url('https://images.unsplash.com/photo-1502685104226-ee32379fefbe?q=80&w=300&auto=format&fit=crop')] bg-center bg-cover">
-                                    </div>
-                                    <div>
-                                        <div class="text-white font-semibold">Sofia L.</div>
-                                        <div class="text-[#C5CFEE] text-sm">Up-to-date and concise—loved the performance
-                                            section.</div>
-                                    </div>
-                                    <div class="r-stars" data-stars="4"></div>
-                                </div>
+
                             </div>
 
                             <form class="grid gap-3 px-4 py-3 border-t border-white/10" @submit.prevent="submitReview">
                                 <div class="flex items-center gap-2 text-white">
                                     <label for="ratingSelect" class="text-sm">Your rating</label>
-                                    <select id="ratingSelect" v-model.number="ratingSelect"
+                                    <select id="ratingSelect" name="rating" v-model.number="ratingSelect"
                                         class="bg-[#0b1024] border border-white/10 rounded-lg px-3 py-2 text-white">
                                         <option :value="5">★★★★★</option>
+  <option :value="4.5">★★★★½</option>
                                         <option :value="4">★★★★☆</option>
                                         <option :value="3">★★★☆☆</option>
                                         <option :value="2">★★☆☆☆</option>
@@ -572,12 +585,25 @@ onMounted(async () => {
                         <small class=" text-sky-700 text-center block">
                             Contact Phone - 09978114491
                         </small>
-                        <button type="submit" :disabled="form.processing"
+                        <button type="submit" :disabled="form.processing || stripeProcessing"
                             class="w-full mt-3 px-4 bg-sky-800 py-3 rounded-lg font-semibold text-white border border-white/20 disabled:opacity-60"
                             >
                             {{ form.processing ? 'Submitting...' : 'Submit' }}
                         </button>
+                        <h3 class="text-center">Or</h3>
                     </form>
+                    <form @submit.prevent="submitPaymentWithStripe" >
+                        <input type="hidden" name="course_id" :value="course.id" />
+                        <input type="hidden" name="fee" :value="course.price" />
+                        <button type="submit"
+                            :disabled="stripeProcessing || form.processing"
+                            class="w-full mt-3 px-4 bg-sky-800 py-3 rounded-lg font-semibold text-white border border-white/20 disabled:opacity-60"
+                            >
+                            {{ stripeProcessing ? 'Redirecting...' : 'Pay with Card' }}
+
+                        </button>
+                    </form>
+
                 </div>
             </div>
         </div>

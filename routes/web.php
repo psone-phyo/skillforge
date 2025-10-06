@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Frontend\DashboardController;
+use App\Http\Controllers\Frontend\PaymentController;
 use App\Models\Course;
 use App\Models\Tag;
 use Illuminate\Support\Facades\Auth;
@@ -45,3 +46,9 @@ Route::get('/course/{id}', [DashboardController::class, 'show'])->name('course-d
 
 //Payment
 Route::post('course/{id}/payments', [DashboardController::class, 'buy'])->name('course.buy');
+Route::post('/stripe/create-payment', [PaymentController::class, 'createPaymentIntent']);
+Route::get('/payment-success', [PaymentController::class, 'success']);
+Route::get('/payment-cancel', [PaymentController::class, 'cancel']);
+Route::post('/add-review', [DashboardController::class, 'addReview']);
+
+
