@@ -1,43 +1,47 @@
 <script setup lang="ts">
-import '../../css/frontend/course-details.css';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { dashboard } from '@/routes';
 import { Head, useForm } from '@inertiajs/vue3';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
-import { ref, onMounted, watch, watchEffect } from 'vue';
+import { ref, onMounted, watch } from 'vue';
 import PlaceholderPattern from '../components/PlaceholderPattern.vue';
 import { usePage } from '@inertiajs/vue3';
 import axios from 'axios'
+import { computed } from 'vue';
 
 const page = usePage();
+const user = page.props.auth.user;
 const successMessage = ref('');
-const toastMessage = ref('')
-const toastVisible = ref(false)
+const toastMessage = ref('');
+const toastVisible = ref(false);
 
 watch(
     () => page.props.flash,
     (flash) => {
         if (flash?.success) {
-            showToast(flash.success)
+            showToast(flash.success);
         } else if (flash?.error) {
-            showToast(flash.error)
+            showToast(flash.error);
         }
     },
     { deep: true, immediate: true }
-)
+);
+
 dayjs.extend(relativeTime);
 dayjs.extend(customParseFormat);
 
 const breadcrumbs = [{ title: 'Dashboard', href: dashboard().url }];
 
 const props = defineProps<{
-    course: any;      // { id, title, tags?, lessons: [{ id, title, video_url, is_locked?, duration?, duration_sec? }] }
+    course: any;      // { id, title, tags?, instructor, lessons: [{ id, title, video_url, is_locked?, duration?, duration_sec? }] }
     fileUrl: string;  // prefix for relative video URLs
     courseStatus: String;
-    reviews: any;
+    reviews: any[];
     avgRating: Number;
+    quizScore: any;
+    quizTotalScore: any
 }>();
 
 // Player state
@@ -57,27 +61,11 @@ function buildSrc(url: string): string {
 // Toast
 const toastEl = ref<HTMLElement | null>(null);
 function showToast(message: string) {
-    toastMessage.value = message
-    toastVisible.value = true
+    toastMessage.value = message;
+    toastVisible.value = true;
     setTimeout(() => {
-        toastVisible.value = false
-    }, 3000)
-}
-
-// Stars
-const courseStarsEl = ref<HTMLElement | null>(null);
-const summaryStarsEl = ref<HTMLElement | null>(null);
-const reviewsEl = ref<HTMLElement | null>(null);
-const DEFAULT_RATING = 4.7;
-const ratingAvg = ref<number>(DEFAULT_RATING);
-function renderStars(el: HTMLElement | null, value: number) {
-    if (!el) return;
-    el.innerHTML = '';
-    const rounded = Math.round(value);
-    for (let i = 1; i <= 5; i++) {
-        const filled = i <= rounded;
-        el.innerHTML += `<svg width="16" height="16" viewBox="0 0 24 24" fill="${filled ? '#FFD36E' : '#2A3159'}" stroke="none"><path d="M12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>`;
-    }
+        toastVisible.value = false;
+    }, 3000);
 }
 
 // Duration helpers
@@ -142,7 +130,7 @@ function playLesson(lesson: any, index: number) {
     currentLesson.value = index;
 }
 
-// Reviews (demo)
+// Reviews
 const ratingSelect = ref<number>(5);
 const reviewText = ref<string>('');
 const submiteForm = useForm({
@@ -150,57 +138,37 @@ const submiteForm = useForm({
     review: reviewText,
     course_id: props.course.id
 });
-
+const deleteForm = useForm({
+    id: null as any
+});
 function submitReview() {
     const stars = ratingSelect.value;
     const text = reviewText.value.trim();
-    if (stars && text){
+    if (stars && text) {
         submiteForm.rating = stars;
         submiteForm.review = text;
         submiteForm.post('/add-review', {
-        forceFormData: true,
-    });
+            forceFormData: true,
+            preserveScroll: true,
+            onSuccess: () => {
+                reviewText.value = '';
+            },
+        });
     }
-//     if (!text || !reviewsEl.value) return;
-//     const node = document.createElement('div');
-//     node.className = 'review';
-//     node.innerHTML = `
-//     <div class="r-avatar" style="background:#0b1024"></div>
-//     <div>
-//       <div class="r-name">You</div>
-//       <div class="r-text"></div>
-//     </div>
-//     <div class="r-stars"></div>
-//   `;
-//     node.querySelector('.r-text')!.textContent = text;
-//     const s = document.createElement('span');
-//     (node.querySelector('.r-stars') as HTMLElement).appendChild(s);
-//     renderStars(s, stars);
-//     reviewsEl.value!.prepend(node);
-//     const current = ratingAvg.value || DEFAULT_RATING;
-//     const newAvg = Math.min(5, Math.round(((current + stars) / 2) * 10) / 10);
-//     ratingAvg.value = Number(newAvg.toFixed(1));
-//     renderStars(summaryStarsEl.value, ratingAvg.value);
-//     reviewText.value = ''; ratingSelect.value = 5;
-//     showToast('Thanks for your review!');
+}
+function deleteReview(id: any) {
+    deleteForm.id = id;
+    deleteForm.get('/delete-review/' + id, { preserveScroll: true });
 }
 
-// Chat (minimal)
-const chatOpen = ref(false);
-function toggleChat() { chatOpen.value = !chatOpen.value; }
-function minimizeChat() { chatOpen.value = false; }
-
-// Buy modal + upload form (Inertia multipart)
+// Buy modal + upload proof
 const buyModalOpen = ref(false);
-const qrImageUrl = ref<string>('/qr-placeholder.png'); // replace with your real QR image path
-
 const form = useForm({
     course_id: null as number | null,
     proof: null as File | null,
     note: '' as string,
     fee: 0,
 });
-
 watch(buyModalOpen, (open) => {
     if (open) {
         form.course_id = props.course?.id ?? null;
@@ -210,18 +178,11 @@ watch(buyModalOpen, (open) => {
         form.fee = 0;
     }
 });
-
-function openBuyModal() {
-    buyModalOpen.value = true;
-}
-function closeBuyModal() {
-    buyModalOpen.value = false;
-}
-
-// Submit to your controller. Adjust URL to your actual route.
+function openBuyModal() { buyModalOpen.value = true; }
+function closeBuyModal() { buyModalOpen.value = false; }
 function submitPayment() {
     if (!form.course_id) form.course_id = props.course?.id ?? null;
-        if (!form.fee || form.fee === 0) form.fee = props.course?.price ?? 0;
+    if (!form.fee || form.fee === 0) form.fee = props.course?.price ?? 0;
     form.post(`/course/${form.course_id}/payments`, {
         forceFormData: true,
         onSuccess: () => {
@@ -233,22 +194,18 @@ function submitPayment() {
         },
     });
 }
-
 const stripeProcessing = ref(false);
-
 function submitPaymentWithStripe() {
     stripeProcessing.value = true;
-    const course_id = props.course?.id
-    const fee = props.course?.price
-
+    const course_id = props.course?.id;
+    const fee = props.course?.price;
     axios.post('/stripe/create-payment', { course_id, fee })
-        .then(response => {
-            window.location.href = response.data.url
-        })
+        .then(response => { window.location.href = response.data.url; })
         .catch(error => {
-            console.error('Payment error:', error)
-            alert('Something went wrong while creating payment.')
+            console.error('Payment error:', error);
+            alert('Something went wrong while creating payment.');
         })
+        .finally(() => { stripeProcessing.value = false; });
 }
 
 // file input handlers
@@ -257,6 +214,94 @@ function onFileChange(e: Event) {
     form.proof = files && files[0] ? files[0] : null;
 }
 
+// QUIZ: modal, load, submit
+const quizModalOpen = ref(false);
+const quizLoading = ref(false);
+const quizError = ref('');
+const quiz = ref<any | null>(null); // { id, title, questions: [{ id, title, choices: [{ id, text }] }] }
+const selectedAnswers = ref<Record<number, number>>({}); // question_id -> choice_id
+const quizForm = useForm({
+    course_id: null as number | null,
+    quiz_id: null as number | null,
+    answers: {} as Record<number, number>,
+});
+
+async function openQuizModal() {
+    quizError.value = '';
+    quizLoading.value = true;
+    quiz.value = null;
+    selectedAnswers.value = {};
+    quizModalOpen.value = true;
+    document.body.style.overflow = 'hidden';
+
+    try {
+        const { data } = await axios.get(`/course/${props.course.id}/quiz`);
+        quiz.value = data;
+        quizForm.course_id = props.course.id;
+        quizForm.quiz_id = data.id;
+    } catch (e: any) {
+        quizError.value = e?.response?.data?.message || 'Could not load quiz.';
+    } finally {
+        quizLoading.value = false;
+    }
+}
+
+function closeQuizModal() {
+    quizModalOpen.value = false;
+    document.body.style.overflow = '';
+
+}
+
+function submitQuiz() {
+    if (!quiz.value) return;
+    quizForm.answers = { ...selectedAnswers.value };
+
+    const unanswered = (quiz.value.questions || []).filter((q: any) => !quizForm.answers[q.id]);
+    if (unanswered.length > 0) {
+        showToast('Please answer all questions before submitting.');
+        return;
+    }
+
+    quizForm.post('/take-quiz', {
+        preserveScroll: true,
+        onSuccess: () => {
+            showToast('Quiz submitted successfully!');
+            closeQuizModal();
+        },
+        onError: () => {
+            showToast('There was an error submitting your quiz.');
+        },
+    });
+}
+
+const quizScore = ref<number>(
+    Number((usePage().props as any)?.quizScore?.score ?? 0) // fallback from page props
+);
+
+// Passing score from course data
+const passingScore = computed(() => Number(props.course?.quiz?.passing_score ?? 0));
+
+// Normalize both to [0,100]
+const normalizedScore = computed(() => Math.max(0, Math.min(100, Number(quizScore.value ?? 0))));
+const normalizedPassing = computed(() => Math.max(0, Math.min(100, passingScore.value)));
+
+// SVG ring math
+const R = 28; // radius
+const C = 2 * Math.PI * R; // circumference
+
+const scoreDash = computed(() => ({
+    dasharray: `${C}`,
+    dashoffset: `${C - (normalizedScore.value / 5) * C}`,
+}));
+
+const passDash = computed(() => ({
+    dasharray: `${C}`,
+    dashoffset: `${C - (normalizedPassing.value / 5) * C}`,
+}));
+
+// Optional: pass/fail status
+const isPassed = computed(() => normalizedScore.value >= normalizedPassing.value);
+
 onMounted(async () => {
     const first = props.course?.lessons?.[0];
     isLocked.value = !!first?.is_locked;
@@ -264,11 +309,8 @@ onMounted(async () => {
     lessonTitle.value = first?.title || '';
     currentLesson.value = 0;
 
-    renderStars(courseStarsEl.value, DEFAULT_RATING);
-    renderStars(summaryStarsEl.value, DEFAULT_RATING);
     document.querySelectorAll<HTMLElement>('.r-stars[data-stars]').forEach((el) => {
         const v = Number(el.dataset.stars || '0');
-        renderStars(el, v);
     });
 
     // Precompute durations
@@ -282,14 +324,12 @@ onMounted(async () => {
     <Head title="Course" />
 
     <AppLayout :breadcrumbs="breadcrumbs">
-          <Transition name="fade">
-    <div
-      v-if="toastVisible"
-      class="fixed top-5 right-5 px-4 py-3 rounded-lg text-white bg-green-600 shadow-lg z-50"
-    >
-      {{ toastMessage }}
-    </div>
-  </Transition>
+        <Transition name="fade">
+            <div v-if="toastVisible"
+                class="fixed top-5 right-5 px-4 py-3 rounded-lg text-white bg-green-600 shadow-lg z-50">
+                {{ toastMessage }}
+            </div>
+        </Transition>
         <main class="py-8">
             <div class="max-w-6xl mx-auto px-4">
                 <div class="grid gap-6 lg:grid-cols-[2fr_1fr]">
@@ -314,15 +354,14 @@ onMounted(async () => {
                                     <h3 class="text-[#9AA6D7] text-md md:text-lg font-semibold">{{ course.title ||
                                         'Course' }}</h3>
                                     <div class="flex flex-wrap items-center gap-2 text-[#9AA6D7] text-sm mt-1">
-                                        <span ref="courseStarsEl" class="inline-flex"></span>
-                                        <span>{{ ratingAvg.toFixed(1) }} (1,248 ratings)</span>
+                                        <span>rating {{ avgRating.toFixed(1) }} ({{ reviews.length }} reviews)</span>
                                         <span>•</span>
                                         <span>{{ course?.lessons?.length || 0 }} lessons</span>
                                     </div>
                                     <div class="flex flex-wrap gap-2 mt-2" v-if="course?.tags?.length">
                                         <span v-for="tag in course.tags" :key="tag.id ?? tag.name"
                                             class="px-3 py-1 rounded-full text-xs border border-white/10 text-[#C3CCF3] bg-[#1C2340]">{{
-                                            tag.name }}</span>
+                                                tag.name }}</span>
                                     </div>
                                 </div>
                                 <div class="flex gap-2"></div>
@@ -335,7 +374,6 @@ onMounted(async () => {
                             style="background:linear-gradient(180deg,#1b2240,#141b33);">
                             <div class="flex items-center justify-between px-4 py-3 border-b border-white/10">
                                 <div class="font-extrabold text-white">Course Curriculum</div>
-                                <div class="text-[#9AA6D7] text-sm">Preview the first 2 lessons for free</div>
                             </div>
 
                             <div class="divide-y divide-white/5">
@@ -362,7 +400,7 @@ onMounted(async () => {
                                                     String(Math.floor((lesson.duration_sec % 3600) / 60)).padStart(2, '0') +
                                                     ':' + String(Math.floor(lesson.duration_sec % 60)).padStart(2, '0')
                                                     : Math.floor((lesson.duration_sec || 0) / 60) + ':' +
-                                                String(Math.floor((lesson.duration_sec || 0) % 60)).padStart(2,'0')
+                                                    String(Math.floor((lesson.duration_sec || 0) % 60)).padStart(2, '0')
                                                 }}
                                             </template>
                                             <template v-else>
@@ -374,8 +412,7 @@ onMounted(async () => {
                                     <span v-if="!lesson.is_locked && courseStatus && courseStatus == 'approved'"
                                         class="px-2 py-1 rounded-md text-xs border border-green-300/40 text-green-200 bg-green-300/10">Unlocked</span>
                                     <span v-else-if="!lesson.is_locked"
-                                        class="px-2 py-1 rounded-md text-xs border border-emerald-300/40 text-emerald-200 bg-emerald-300/10">Free
-                                        preview</span>
+                                        class="px-2 py-1 rounded-md text-xs border border-emerald-300/40 text-emerald-200 bg-emerald-300/10">Free</span>
                                     <span v-else
                                         class="px-2 py-1 rounded-md text-xs border border-pink-300/40 text-pink-200 bg-pink-300/10">Locked</span>
                                 </div>
@@ -387,36 +424,55 @@ onMounted(async () => {
                             class="rounded-2xl overflow-hidden border border-white/10 shadow-[0_10px_30px_rgba(0,0,0,0.35),_0_2px_6px_rgba(0,0,0,0.2)]"
                             style="background:linear-gradient(180deg,#1b2240,#141b33);">
                             <div class="flex items-center gap-4 px-4 py-3 border-b border-white/10">
-                                <div class="text-4xl font-extrabold text-white">{{ avgRating.toFixed(1) }}</div>
-                                <div ref="summaryStarsEl" class="inline-flex"></div>
+                                <div>Reviews and Ratings</div>
+                                <!-- <div class="text-4xl font-extrabold text-white">{{ avgRating.toFixed(1) }}</div> -->
+                                <!-- <div ref="summaryStarsEl" class="inline-flex"></div> -->
                             </div>
 
                             <div ref="reviewsEl" class="px-4 py-2 divide-y divide-white/10">
-                                <div class=" grid-cols-[auto_1fr_auto] gap-3 py-3" v-for="review in reviews" :key="review.id">
-                                    <div class="flex items-center gap-2 mb-2">
-                                    <div
-                                        class="w-9 h-9 rounded-full border border-white/10 bg-center bg-cover"
-                                        >
-                                    </div>
-                                    <div>
-                                        <div class="text-white font-semibold">{{ review.user.name }}</div>
+                                <div class="text-center" v-show="reviews.length == 0">
+                                    No Reviews and Ratings Yet
+                                </div>
+                                <div class=" grid-cols-[auto_1fr_auto] gap-3 py-3" v-for="review in reviews"
+                                    :key="review.id">
+                                    <div class="flex justify-between">
+                                        <div class="flex items-center gap-2 mb-2">
+                                            <img class="w-9 h-9 rounded-full border border-white/10 bg-center bg-cover"
+                                                :src="review.user.profile_url" alt="Profile" />
+                                            <div>
+                                                <div class="text-white font-semibold">{{ review.user.name }}</div>
+                                            </div>
 
+
+                                        </div>
+                                        <div>
+                                            <a @click="deleteReview(review.id)"
+                                                class="text-red-600 p-1 rounded-md cursor-pointer"
+                                                v-if="review.user_id == user.id">
+                                                <span class="material-icons">delete</span>
+                                            </a>
+                                        </div>
                                     </div>
-                                    </div>
+                                    <!-- <div class="r-stars" :data-stars="review.rating"></div> -->
+                                    <div class="text-yellow-300" v-show="review.rating == 5">★★★★★</div>
+                                    <div class="text-yellow-300" v-show="review.rating == 4">★★★★☆</div>
+                                    <div class="text-yellow-300" v-show="review.rating == 3">★★★☆☆</div>
+                                    <div class="text-yellow-300" v-show="review.rating == 2">★★☆☆☆</div>
+                                    <div class="text-yellow-300" v-show="review.rating == 1">★☆☆☆☆</div>
 
                                     <div class="text-[#C5CFEE] text-sm">{{ review.comment }}</div>
-                                    <div class="r-stars" :data-stars="review.rating"></div>
+
                                 </div>
+
 
                             </div>
 
-                            <form class="grid gap-3 px-4 py-3 border-t border-white/10" @submit.prevent="submitReview">
-                                <div class="flex items-center gap-2 text-white">
+                            <form class="gap-3 px-4 py-3 border-t border-white/10" @submit.prevent="submitReview">
+                                <div class="items-center gap-2 text-white">
                                     <label for="ratingSelect" class="text-sm">Your rating</label>
                                     <select id="ratingSelect" name="rating" v-model.number="ratingSelect"
                                         class="bg-[#0b1024] border border-white/10 rounded-lg px-3 py-2 text-white">
                                         <option :value="5">★★★★★</option>
-  <option :value="4.5">★★★★½</option>
                                         <option :value="4">★★★★☆</option>
                                         <option :value="3">★★★☆☆</option>
                                         <option :value="2">★★☆☆☆</option>
@@ -425,14 +481,10 @@ onMounted(async () => {
                                 </div>
                                 <textarea id="reviewText" rows="3" v-model="reviewText"
                                     placeholder="Share your thoughts about this course..."
-                                    class="bg-[#0b1024] border border-white/10 rounded-xl px-3 py-2 text-white placeholder:text-[#9AA6D7]"></textarea>
+                                    class="bg-[#0b1024] border border-white/10 rounded-xl px-3 py-2 text-white placeholder:text-[#9AA6D7] w-full"></textarea>
                                 <div class="flex justify-end gap-2">
-                                    <button type="button"
-                                        class="px-4 py-2 rounded-lg font-semibold border border-white/10 text-white"
-                                        style="background:linear-gradient(180deg,#1b2240,#141b33);">Cancel</button>
                                     <button type="submit"
-                                        class="px-4 py-2 rounded-lg font-semibold text-white border border-white/20"
-                                        style="background:linear-gradient(180deg,#5B8CFF,#7B61FF);">Submit
+                                        class="px-4 py-2 rounded-lg font-semibold text-white border border-white/20 bg-sky-700">Submit
                                         review</button>
                                 </div>
                             </form>
@@ -473,18 +525,26 @@ onMounted(async () => {
                                 </div>
 
                                 <div class="h-px bg-white/10 my-1"></div>
-                                <div
-                                    class="w-full text-center cursor-pointer px-4 py-3 rounded-lg font-semibold text-white border border-white/20 bg-sky-700"
-                                    v-if="courseStatus && courseStatus != 'rejected'"
-                                    >
+                                <div class="w-full text-center cursor-pointer px-4 py-3 rounded-lg font-semibold text-white border border-white/20 bg-sky-700"
+                                    v-if="courseStatus && courseStatus == 'free'">
+                                    Free </div>
+
+                                <div class="w-full text-center cursor-pointer px-4 py-3 rounded-lg font-semibold text-white border border-white/20 bg-sky-700"
+                                    v-else-if="courseStatus && courseStatus != 'rejected' && courseStatus != 'free'">
                                     {{ courseStatus == 'pending' ? 'Reviewing your payment...' : 'Paid' }}
                                 </div>
 
-                                <button
-                                    v-else
-                                    class="w-full px-4 py-3 rounded-lg font-semibold text-white border border-white/20 bg-sky-800"
+                                <button v-else
+                                    class="cursor-pointer w-full px-4 py-3 rounded-lg font-semibold text-white border border-white/20 bg-sky-800"
                                     @click="openBuyModal">
                                     Buy course
+                                </button>
+
+                                <!-- Take Quiz button -->
+                                <button v-show="courseStatus && (courseStatus == 'approved' || courseStatus == 'free')"
+                                    class="cursor-pointer w-full mt-2 px-4 py-3 rounded-lg font-semibold text-white border border-white/20 bg-indigo-700 hover:bg-indigo-800"
+                                    @click="openQuizModal">
+                                    Take Quiz
                                 </button>
 
                                 <div class="flex items-center gap-2 text-[#9AA6D7] text-xs mt-3">
@@ -502,13 +562,83 @@ onMounted(async () => {
                                 <div class="font-extrabold text-white">Instructor</div>
                             </div>
                             <div class="flex items-center gap-3 p-4">
-                                <div
-                                    class="w-12 h-12 rounded-xl border border-white/10 bg-[url('https://images.unsplash.com/photo-1547425260-76bcadfb4f2c?q=80&w=300&auto=format&fit=crop')] bg-center bg-cover">
-                                </div>
+                                <img class="w-12 h-12 rounded-xl border border-white/10 bg-center bg-cover"
+                                    :src="course.instructor.profile_url" />
                                 <div>
-                                    <div class="text-white font-semibold">Alex Rivera</div>
-                                    <div class="text-[#9AA6D7] text-sm">Senior Frontend Engineer • 120k students</div>
+                                    <div class="text-white font-semibold">{{ course.instructor.name }}</div>
+                                    <div class="text-[#9AA6D7] text-sm">{{ course.instructor.title }} • {{
+                                        course.instructor.courses.length
+                                    }} Courses</div>
                                 </div>
+                            </div>
+                        </div>
+
+                        <!-- Quiz Progress -->
+                        <div class="rounded-2xl overflow-hidden border border-white/10 shadow-[0_10px_30px_rgba(0,0,0,0.35),_0_2px_6px_rgba(0,0,0,0.2)]"
+                            style="background:linear-gradient(180deg,#1b2240,#141b33);">
+                            <div class="px-4 py-3 border-b border-white/10 flex items-center justify-between">
+                                <div class="font-extrabold text-white">Quiz Progress</div>
+                                <span :class="[
+                                    'text-xs px-2 py-1 rounded-md border',
+                                    isPassed ? 'text-emerald-200 border-emerald-300/40 bg-emerald-300/10' : 'text-pink-200 border-pink-300/40 bg-pink-300/10'
+                                ]">
+                                    {{ isPassed ? 'Passed' : 'Not Passed' }}
+                                </span>
+                            </div>
+
+                            <div class="p-4 grid grid-cols-2 gap-4">
+                                <!-- Score -->
+                                <div class="flex items-center gap-3">
+                                    <svg width="72" height="72" viewBox="0 0 72 72" class="shrink-0">
+                                        <!-- track -->
+                                        <circle cx="36" cy="36" :r="R" stroke="#273159" stroke-width="8" fill="none" />
+                                        <!-- progress -->
+                                        <circle cx="36" cy="36" :r="R" stroke="url(#scoreGrad)" stroke-width="8"
+                                            fill="none" :stroke-dasharray="scoreDash.dasharray"
+                                            :stroke-dashoffset="scoreDash.dashoffset" stroke-linecap="round"
+                                            transform="rotate(-90 36 36)" />
+                                        <defs>
+                                            <linearGradient id="scoreGrad" x1="0" y1="0" x2="72" y2="72"
+                                                gradientUnits="userSpaceOnUse">
+                                                <stop stop-color="#5B8CFF" />
+                                                <stop offset="1" stop-color="#7B61FF" />
+                                            </linearGradient>
+                                        </defs>
+                                    </svg>
+                                    <div>
+                                        <div class="text-white font-semibold">Score</div>
+                                        <div class="text-[#C5CFEE] text-sm">{{ normalizedScore }}</div>
+                                    </div>
+                                </div>
+
+                                <!-- Passing -->
+                                <div class="flex items-center gap-3">
+                                    <svg width="72" height="72" viewBox="0 0 72 72" class="shrink-0">
+                                        <!-- track -->
+                                        <circle cx="36" cy="36" :r="R" stroke="#273159" stroke-width="8" fill="none" />
+                                        <!-- progress -->
+                                        <circle cx="36" cy="36" :r="R" stroke="url(#passGrad)" stroke-width="8"
+                                            fill="none" :stroke-dasharray="passDash.dasharray"
+                                            :stroke-dashoffset="passDash.dashoffset" stroke-linecap="round"
+                                            transform="rotate(-90 36 36)" />
+                                        <defs>
+                                            <linearGradient id="passGrad" x1="0" y1="0" x2="72" y2="72"
+                                                gradientUnits="userSpaceOnUse">
+                                                <stop stop-color="#42E3B4" />
+                                                <stop offset="1" stop-color="#29C2A0" />
+                                            </linearGradient>
+                                        </defs>
+                                    </svg>
+                                    <div>
+                                        <div class="text-white font-semibold">Passing Score</div>
+                                        <div class="text-[#C5CFEE] text-sm">{{ normalizedPassing }}</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Raw values display -->
+                            <div class="px-4 pb-4 text-[#9AA6D7] text-xs">
+                                Your Score: {{ (quizScore ?? 0) }} / {{ (quizTotalScore ?? 0) }}
                             </div>
                         </div>
                     </aside>
@@ -577,7 +707,9 @@ onMounted(async () => {
                                 class="w-full bg-[#0b1024] border border-white/10 rounded-lg px-3 py-2 text-white placeholder:text-[#9AA6D7]"></textarea>
                         </div>
                         <small class="text-sky-500">
-                            After submitting your payment and uploading the proof (such as a screenshot or receipt), our team will review and confirm your payment within 24 hours.
+                            After submitting your payment and uploading the proof (such as a screenshot or receipt), our
+                            team
+                            will review and confirm your payment within 24 hours.
                         </small>
                         <small class=" text-sky-700 text-center block">
                             Contact Mail - staff@skillforge.com
@@ -586,24 +718,79 @@ onMounted(async () => {
                             Contact Phone - 09978114491
                         </small>
                         <button type="submit" :disabled="form.processing || stripeProcessing"
-                            class="w-full mt-3 px-4 bg-sky-800 py-3 rounded-lg font-semibold text-white border border-white/20 disabled:opacity-60"
-                            >
+                            class="w-full mt-3 px-4 bg-sky-800 py-3 rounded-lg font-semibold text-white border border-white/20 disabled:opacity-60">
                             {{ form.processing ? 'Submitting...' : 'Submit' }}
                         </button>
                         <h3 class="text-center">Or</h3>
                     </form>
-                    <form @submit.prevent="submitPaymentWithStripe" >
+                    <form @submit.prevent="submitPaymentWithStripe">
                         <input type="hidden" name="course_id" :value="course.id" />
                         <input type="hidden" name="fee" :value="course.price" />
-                        <button type="submit"
-                            :disabled="stripeProcessing || form.processing"
-                            class="w-full mt-3 px-4 bg-sky-800 py-3 rounded-lg font-semibold text-white border border-white/20 disabled:opacity-60"
-                            >
+                        <button type="submit" :disabled="stripeProcessing || form.processing"
+                            class="w-full mt-3 px-4 bg-sky-800 py-3 rounded-lg font-semibold text-white border border-white/20 disabled:opacity-60">
                             {{ stripeProcessing ? 'Redirecting...' : 'Pay with Card' }}
 
                         </button>
                     </form>
+                    <!-- QUIZ MODAL -->
+                </div>
+            </div>
+        </div>
 
+        <!-- QUIZ MODAL -->
+        <div v-show="quizModalOpen"
+            class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+            @click.self="closeQuizModal">
+            <div
+                class="w-full max-w-2xl max-h-[90vh] overflow-hidden rounded-2xl border border-white/10 shadow-[0_10px_30px_rgba(0,0,0,0.35)] bg-[linear-gradient(180deg,#1b2240,#141b33)]">
+                <!-- Sticky Header -->
+                <div
+                    class="sticky top-0 z-10 flex items-center justify-between px-4 py-3 border-b border-white/10 bg-[linear-gradient(180deg,#1b2240,#141b33)]">
+                    <div class="font-extrabold text-white">
+                        {{ quizLoading ? 'Loading quiz...' : (quiz?.title || 'Course Quiz') }}
+                    </div>
+                    <button class="px-3 py-1 rounded-full border border-white/10 text-white"
+                        @click="closeQuizModal">Close</button>
+                </div>
+
+                <!-- Scrollable content area -->
+                <div class="p-4 grid gap-4 overflow-y-auto max-h-[calc(90vh-56px)]">
+                    <div v-if="quizError" class="text-pink-300 text-sm">{{ quizError }}</div>
+                    <div v-else-if="quizLoading" class="text-[#9AA6D7]">Please wait...</div>
+
+                    <form v-else-if="quiz" @submit.prevent="submitQuiz" class="grid gap-5">
+                        <input type="hidden" name="course_id" :value="course.id" />
+                        <input type="hidden" name="quiz_id" :value="quiz.id" />
+
+                        <div v-for="(q, qi) in quiz.quiz_questions" :key="q.id" class="grid gap-2">
+                            <div class="text-white font-semibold">
+                                Q{{ qi + 1 }}. {{ q.title }}
+                            </div>
+                            <div class="grid gap-2">
+                                <label v-for="choice in q.options" :key="choice.id"
+                                    class="flex items-center gap-2 px-3 py-2 rounded-lg border border-white/10 text-white bg-[#101733] hover:bg-[#0f1733] cursor-pointer">
+                                    <input class="accent-blue-500" type="radio" :name="'q-' + q.id" :value="choice.id"
+                                        v-model="selectedAnswers[q.id]" />
+                                    <span>{{ choice.answer }}</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div
+                            class="sticky bottom-0 flex justify-end gap-2 pt-2 bg-[linear-gradient(180deg,rgba(27,34,64,0.95),rgba(20,27,51,0.95))]">
+                            <button type="button"
+                                class="px-4 py-2 rounded-lg font-semibold border border-white/10 text-white"
+                                style="background:linear-gradient(180deg,#1b2240,#141b33);" @click="closeQuizModal">
+                                Cancel
+                            </button>
+                            <button type="submit"
+                                class="px-4 py-2 rounded-lg font-semibold text-white border border-white/20 bg-sky-500">
+                                Submit Quiz
+                            </button>
+                        </div>
+                    </form>
+
+                    <div v-else class="text-[#9AA6D7]">No quiz found for this course.</div>
                 </div>
             </div>
         </div>
@@ -613,10 +800,11 @@ onMounted(async () => {
 <style scoped>
 .fade-enter-active,
 .fade-leave-active {
-  transition: opacity 0.4s;
+    transition: opacity 0.4s;
 }
+
 .fade-enter-from,
 .fade-leave-to {
-  opacity: 0;
+    opacity: 0;
 }
 </style>

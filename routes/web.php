@@ -2,6 +2,8 @@
 
 use App\Http\Controllers\Frontend\DashboardController;
 use App\Http\Controllers\Frontend\PaymentController;
+use App\Http\Controllers\Frontend\QuizController;
+use App\Http\Controllers\Frontend\ReviewController;
 use App\Models\Course;
 use App\Models\Tag;
 use Illuminate\Support\Facades\Auth;
@@ -49,6 +51,9 @@ Route::post('course/{id}/payments', [DashboardController::class, 'buy'])->name('
 Route::post('/stripe/create-payment', [PaymentController::class, 'createPaymentIntent']);
 Route::get('/payment-success', [PaymentController::class, 'success']);
 Route::get('/payment-cancel', [PaymentController::class, 'cancel']);
-Route::post('/add-review', [DashboardController::class, 'addReview']);
+Route::post('/add-review', [ReviewController::class, 'addReview']);
+Route::get('/delete-review/{id}', [ReviewController::class, 'delete']);
+Route::get('/course/{id}/quiz', [QuizController::class, 'get']);
+Route::post('/take-quiz', [QuizController::class, 'submit']);
 
 

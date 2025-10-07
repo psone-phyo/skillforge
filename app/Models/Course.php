@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Models\Lesson;
+use App\Models\Quiz;
 class Course extends Model
 {
     use SoftDeletes;
@@ -40,5 +41,9 @@ class Course extends Model
 
     public function lessons(){
         return $this->hasMany(Lesson::class, 'course_id');
+    }
+
+    public function quiz(){
+        return $this->hasOne(Quiz::class, 'course_id');
     }
 }

@@ -9,7 +9,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Fortify\TwoFactorAuthenticatable;
 use Spatie\Permission\Traits\HasRoles;
-
+use App\Models\Course;
 class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
@@ -72,4 +72,9 @@ class User extends Authenticatable
     public function isStudent(){
         return $this->student ?? false;
     }
+
+    public function courses()
+{
+    return $this->hasMany(Course::class, 'instructor_id');
+}
 }
