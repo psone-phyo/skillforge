@@ -66,6 +66,11 @@ const mainNavItems: NavItem[] = [
         href: dashboard(),
         icon: LayoutGrid,
     },
+    {
+        title: 'Chat',
+        href: '/chat',
+        icon: LayoutGrid,
+    },
 ];
 
 const rightNavItems: NavItem[] = [

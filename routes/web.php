@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Frontend\ChatController;
 use App\Http\Controllers\Frontend\DashboardController;
 use App\Http\Controllers\Frontend\PaymentController;
 use App\Http\Controllers\Frontend\QuizController;
@@ -55,5 +56,9 @@ Route::post('/add-review', [ReviewController::class, 'addReview']);
 Route::get('/delete-review/{id}', [ReviewController::class, 'delete']);
 Route::get('/course/{id}/quiz', [QuizController::class, 'get']);
 Route::post('/take-quiz', [QuizController::class, 'submit']);
+
+Route::get('/get/certificate/{course_id}', [DashboardController::class, 'getCertificate'])->name('get.certificate');
+Route::get('/chat', [ChatController::class, 'index'])->name('chat');
+
 
 

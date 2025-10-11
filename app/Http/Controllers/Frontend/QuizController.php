@@ -1,6 +1,7 @@
 <?php
 namespace App\Http\Controllers\Frontend;
 
+use App\Models\Certificate;
 use App\Models\Quiz;
 use App\Models\QuizAttempt;
 use App\Models\QuizQuestion;
@@ -30,15 +31,25 @@ class QuizController{
             }
         }
 
-        QuizAttempt::create([
+        $quizAttempt = QuizAttempt::create([
             'user_id' => Auth::id(),
             'quiz_id' => $data['quiz_id'],
             'score' => $totalScore,
         ]);
 
+        if ($totalScore >= $quiz->passing_score){
+            Certificate::create([
+                'course_id' => $quiz->course->id,
+                'user_id' => Auth::id(),
+                'issue_number' => 'SF-' . str_pad($quizAttempt->id, 6, '0', STR_PAD_LEFT),
+                'issue_date' => now()->format('Y-m-d'),
+                'certificate_url' => config('app.url')."/get/certificate/".$quiz->course->id
+            ]);
+        }
+
         return response()->json([
             'score' => $totalScore,
-            'passed' => $quiz->passing_point,
+            'passed' => $quiz->passing_score,
         ]);
     }
 }

@@ -252,34 +252,12 @@ function closeQuizModal() {
 
 }
 
-function submitQuiz() {
-    if (!quiz.value) return;
-    quizForm.answers = { ...selectedAnswers.value };
-
-    const unanswered = (quiz.value.questions || []).filter((q: any) => !quizForm.answers[q.id]);
-    if (unanswered.length > 0) {
-        showToast('Please answer all questions before submitting.');
-        return;
-    }
-
-    quizForm.post('/take-quiz', {
-        preserveScroll: true,
-        onSuccess: () => {
-            showToast('Quiz submitted successfully!');
-            closeQuizModal();
-        },
-        onError: () => {
-            showToast('There was an error submitting your quiz.');
-        },
-    });
-}
-
 const quizScore = ref<number>(
     Number((usePage().props as any)?.quizScore?.score ?? 0) // fallback from page props
 );
 
 // Passing score from course data
-const passingScore = computed(() => Number(props.course?.quiz?.passing_score ?? 0));
+const passingScore = ref<number>(Number(props.course?.quiz?.passing_score ?? 0));
 
 // Normalize both to [0,100]
 const normalizedScore = computed(() => Math.max(0, Math.min(100, Number(quizScore.value ?? 0))));
@@ -301,6 +279,37 @@ const passDash = computed(() => ({
 
 // Optional: pass/fail status
 const isPassed = computed(() => normalizedScore.value >= normalizedPassing.value);
+
+async function submitQuiz() {
+    if (!quiz.value) return;
+
+    quizForm.answers = { ...selectedAnswers.value };
+
+    const unanswered = (quiz.value.questions || []).filter((q: any) => !quizForm.answers[q.id]);
+    if (unanswered.length > 0) {
+        showToast('Please answer all questions before submitting.');
+        return;
+    }
+
+    try {
+        const response = await axios.post('/take-quiz', {
+            quiz_id: quiz.value.id,
+            answers: quizForm.answers,
+        });
+
+        const data = response.data;
+
+        quizScore.value = data.score ?? 0;
+        passingScore.value = data.passed ?? 0;
+        showToast(`Quiz submitted! Your score: ${quizScore.value}`);
+
+        closeQuizModal();
+
+    } catch (error) {
+        showToast('There was an error submitting your quiz.');
+        console.error(error);
+    }
+}
 
 onMounted(async () => {
     const first = props.course?.lessons?.[0];
@@ -543,9 +552,14 @@ onMounted(async () => {
                                 <!-- Take Quiz button -->
                                 <button v-show="courseStatus && (courseStatus == 'approved' || courseStatus == 'free')"
                                     class="cursor-pointer w-full mt-2 px-4 py-3 rounded-lg font-semibold text-white border border-white/20 bg-indigo-700 hover:bg-indigo-800"
-                                    @click="openQuizModal">
+                                    @click="openQuizModal" v-if="!isPassed">
                                     Take Quiz
                                 </button>
+                                <a v-if="courseStatus && (courseStatus == 'approved' || courseStatus == 'free')"
+                                    class="block text-center cursor-pointer w-full mt-2 px-4 py-3 rounded-lg font-semibold text-white border border-white/20 bg-indigo-700 hover:bg-indigo-800"
+                                    :href="`/get/certificate/${course.id}`">
+                                    Get Certificate
+                                </a>
 
                                 <div class="flex items-center gap-2 text-[#9AA6D7] text-xs mt-3">
                                     <svg width="16" height="16" fill="#AFC7FF" viewBox="0 0 24 24">
@@ -568,7 +582,7 @@ onMounted(async () => {
                                     <div class="text-white font-semibold">{{ course.instructor.name }}</div>
                                     <div class="text-[#9AA6D7] text-sm">{{ course.instructor.title }} • {{
                                         course.instructor.courses.length
-                                    }} Courses</div>
+                                        }} Courses</div>
                                 </div>
                             </div>
                         </div>
@@ -638,7 +652,7 @@ onMounted(async () => {
 
                             <!-- Raw values display -->
                             <div class="px-4 pb-4 text-[#9AA6D7] text-xs">
-                                Your Score: {{ (quizScore ?? 0) }} / {{ (quizTotalScore ?? 0) }}
+                                Your Scorecompser run dev: {{ (quizScore ?? 0) }} / {{ (quizTotalScore ?? 0) }}
                             </div>
                         </div>
                     </aside>

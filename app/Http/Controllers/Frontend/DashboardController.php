@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Frontend;
 
 use App\Enums\CourseStatus;
 use App\Models\Category;
+use App\Models\Certificate;
 use App\Models\Course;
 use App\Models\Payment;
 use App\Models\QuizAttempt;
@@ -96,5 +97,16 @@ class DashboardController
         ];
         Review::create($data);
         // return back()->with(['success' => 'Review Sent successfully']);
+    }
+
+    public function getCertificate($course_id){
+        if (!$course_id) return back();
+
+        $certificate = Certificate::with(['user','course.instructor'])->where('user_id', Auth::id())->where('course_id', $course_id)->first();
+        if ($certificate){
+            return view('certificates.show', compact('certificate'));
+        }else{
+            return back();
+        }
     }
 }
