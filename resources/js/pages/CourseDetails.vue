@@ -10,7 +10,9 @@ import PlaceholderPattern from '../components/PlaceholderPattern.vue';
 import { usePage } from '@inertiajs/vue3';
 import axios from 'axios'
 import { computed } from 'vue';
+import { useI18n } from '@/composables/useI18n';
 
+const { t, locale } = useI18n();
 const page = usePage();
 const user = page.props.auth.user;
 const successMessage = ref('');
@@ -32,7 +34,7 @@ watch(
 dayjs.extend(relativeTime);
 dayjs.extend(customParseFormat);
 
-const breadcrumbs = [{ title: 'Dashboard', href: dashboard().url }];
+const breadcrumbs = [{ title: t('nav.dashboard'), href: dashboard().url }];
 
 const props = defineProps<{
     course: any;      // { id, title, tags?, instructor, lessons: [{ id, title, video_url, is_locked?, duration?, duration_sec? }] }
@@ -126,7 +128,7 @@ async function ensureLessonDuration(lesson: any, idx: number) {
 function playLesson(lesson: any, index: number) {
     currentVideoSrc.value = buildSrc(lesson.video_url || '');
     isLocked.value = !!lesson.is_locked;
-    lessonTitle.value = lesson.title;
+    lessonTitle.value = locale == 'my' ? lesson.mm_title : lesson.title;
     currentLesson.value = index;
 }
 
@@ -187,10 +189,10 @@ function submitPayment() {
         forceFormData: true,
         onSuccess: () => {
             closeBuyModal();
-            showToast('Upload received. We will review your payment.');
+            showToast(t('messages.payment_received'));
         },
         onError: () => {
-            showToast('There was an error submitting your payment.');
+            showToast(t('messages.payment_error'));
         },
     });
 }
@@ -240,7 +242,7 @@ async function openQuizModal() {
         quizForm.course_id = props.course.id;
         quizForm.quiz_id = data.id;
     } catch (e: any) {
-        quizError.value = e?.response?.data?.message || 'Could not load quiz.';
+        quizError.value = e?.response?.data?.message || t('not_load_quiz');
     } finally {
         quizLoading.value = false;
     }
@@ -287,7 +289,7 @@ async function submitQuiz() {
 
     const unanswered = (quiz.value.questions || []).filter((q: any) => !quizForm.answers[q.id]);
     if (unanswered.length > 0) {
-        showToast('Please answer all questions before submitting.');
+        showToast(t('messages.answer_all'));
         return;
     }
 
@@ -301,12 +303,12 @@ async function submitQuiz() {
 
         quizScore.value = data.score ?? 0;
         passingScore.value = data.passed ?? 0;
-        showToast(`Quiz submitted! Your score: ${quizScore.value}`);
+        showToast(t('messages.quiz_submitted')+`: ${quizScore.value}`);
 
         closeQuizModal();
 
     } catch (error) {
-        showToast('There was an error submitting your quiz.');
+        showToast(t('messages.error_submit'));
         console.error(error);
     }
 }
@@ -315,7 +317,7 @@ onMounted(async () => {
     const first = props.course?.lessons?.[0];
     isLocked.value = !!first?.is_locked;
     currentVideoSrc.value = buildSrc(first?.video_url || '');
-    lessonTitle.value = first?.title || '';
+    lessonTitle.value = locale == 'my' ? first?.mm_title : first?.title || '';
     currentLesson.value = 0;
 
     document.querySelectorAll<HTMLElement>('.r-stars[data-stars]').forEach((el) => {
@@ -360,12 +362,12 @@ onMounted(async () => {
                             <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-3 p-4">
                                 <div>
                                     <h1 class="text-white text-xl md:text-2xl font-extrabold">{{ lessonTitle }}</h1>
-                                    <h3 class="text-[#9AA6D7] text-md md:text-lg font-semibold">{{ course.title ||
+                                    <h3 class="text-[#9AA6D7] text-md md:text-lg font-semibold">{{ locale == 'my' ? course.mm_title : course.title ||
                                         'Course' }}</h3>
                                     <div class="flex flex-wrap items-center gap-2 text-[#9AA6D7] text-sm mt-1">
-                                        <span>rating {{ avgRating.toFixed(1) }} ({{ reviews.length }} reviews)</span>
+                                        <span>{{ t('course.rating') }} {{ avgRating.toFixed(1) }} ({{ reviews.length }} {{ t('course.reviews') }})</span>
                                         <span>•</span>
-                                        <span>{{ course?.lessons?.length || 0 }} lessons</span>
+                                        <span>{{ course?.lessons?.length || 0 }} {{ t('course.lessons') }}</span>
                                     </div>
                                     <div class="flex flex-wrap gap-2 mt-2" v-if="course?.tags?.length">
                                         <span v-for="tag in course.tags" :key="tag.id ?? tag.name"
@@ -382,7 +384,7 @@ onMounted(async () => {
                             class="rounded-2xl overflow-hidden border border-white/10 shadow-[0_10px_30px_rgba(0,0,0,0.35),_0_2px_6px_rgba(0,0,0,0.2)]"
                             style="background:linear-gradient(180deg,#1b2240,#141b33);">
                             <div class="flex items-center justify-between px-4 py-3 border-b border-white/10">
-                                <div class="font-extrabold text-white">Course Curriculum</div>
+                                <div class="font-extrabold text-white">{{ t('course.choose_curriculum') }}</div>
                             </div>
 
                             <div class="divide-y divide-white/5">
@@ -396,7 +398,7 @@ onMounted(async () => {
                                     </div>
 
                                     <div class="flex-1">
-                                        <div class="text-white font-semibold">{{ lesson.title || `Lesson ${idx + 1}` }}
+                                        <div class="text-white font-semibold">{{ locale == 'my' ? lesson.mm_title : lesson.title || `Lesson ${idx + 1}` }}
                                         </div>
                                         <div class="text-[#9AA6D7] text-xs">
                                             <template v-if="lesson.duration && typeof lesson.duration === 'string'">
@@ -419,11 +421,11 @@ onMounted(async () => {
                                     </div>
 
                                     <span v-if="!lesson.is_locked && courseStatus && courseStatus == 'approved'"
-                                        class="px-2 py-1 rounded-md text-xs border border-green-300/40 text-green-200 bg-green-300/10">Unlocked</span>
+                                        class="px-2 py-1 rounded-md text-xs border border-green-300/40 text-green-200 bg-green-300/10">{{ t('course.unlocked') }}</span>
                                     <span v-else-if="!lesson.is_locked"
-                                        class="px-2 py-1 rounded-md text-xs border border-emerald-300/40 text-emerald-200 bg-emerald-300/10">Free</span>
+                                        class="px-2 py-1 rounded-md text-xs border border-emerald-300/40 text-emerald-200 bg-emerald-300/10">{{ t('course.free') }}</span>
                                     <span v-else
-                                        class="px-2 py-1 rounded-md text-xs border border-pink-300/40 text-pink-200 bg-pink-300/10">Locked</span>
+                                        class="px-2 py-1 rounded-md text-xs border border-pink-300/40 text-pink-200 bg-pink-300/10">{{ t('course.locked') }}</span>
                                 </div>
                             </div>
                         </section>
@@ -433,14 +435,14 @@ onMounted(async () => {
                             class="rounded-2xl overflow-hidden border border-white/10 shadow-[0_10px_30px_rgba(0,0,0,0.35),_0_2px_6px_rgba(0,0,0,0.2)]"
                             style="background:linear-gradient(180deg,#1b2240,#141b33);">
                             <div class="flex items-center gap-4 px-4 py-3 border-b border-white/10">
-                                <div>Reviews and Ratings</div>
+                                <div>{{ t('course.reviews_ratings') }}</div>
                                 <!-- <div class="text-4xl font-extrabold text-white">{{ avgRating.toFixed(1) }}</div> -->
                                 <!-- <div ref="summaryStarsEl" class="inline-flex"></div> -->
                             </div>
 
                             <div ref="reviewsEl" class="px-4 py-2 divide-y divide-white/10">
                                 <div class="text-center" v-show="reviews.length == 0">
-                                    No Reviews and Ratings Yet
+                                    {{ t('course.no_reviews_ratings') }}
                                 </div>
                                 <div class=" grid-cols-[auto_1fr_auto] gap-3 py-3" v-for="review in reviews"
                                     :key="review.id">
@@ -489,12 +491,11 @@ onMounted(async () => {
                                     </select>
                                 </div>
                                 <textarea id="reviewText" rows="3" v-model="reviewText"
-                                    placeholder="Share your thoughts about this course..."
+                                    :placeholder="t('course.review_placeholder')"
                                     class="bg-[#0b1024] border border-white/10 rounded-xl px-3 py-2 text-white placeholder:text-[#9AA6D7] w-full"></textarea>
                                 <div class="flex justify-end gap-2">
                                     <button type="submit"
-                                        class="px-4 py-2 rounded-lg font-semibold text-white border border-white/20 bg-sky-700">Submit
-                                        review</button>
+                                        class="px-4 py-2 rounded-lg font-semibold text-white border border-white/20 bg-sky-700">{{ t('course.submit_review') }}</button>
                                 </div>
                             </form>
                         </section>
@@ -507,9 +508,9 @@ onMounted(async () => {
                             <div class="h-40 bg-white bg-center bg-cover"></div>
                             <div class="p-4 gap-2">
                                 <div class="text-white text-2xl font-extrabold">
-                                    {{ course.is_paid ? course.price + ' MMK' : 'free' }}
+                                    {{ course.is_paid ? course.price + ' ' + t('course.mmk') : t('course.free') }}
                                 </div>
-                                <div class="text-[#9AA6D7] text-sm">Full lifetime access | Quiz | Certificate</div>
+                                <div class="text-[#9AA6D7] text-sm">{{ t('course.payment_1') }}</div>
                                 <div class="h-px bg-white/10 my-1"></div>
 
                                 <div class="gap-2 text-[#B8C4ED] text-sm">
@@ -517,55 +518,56 @@ onMounted(async () => {
                                         <svg width="16" height="16" fill="#7CF8C4" viewBox="0 0 24 24">
                                             <path d="M9 16.17 4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
                                         </svg>
-                                        Lifetime all lessons access
+                                       {{ t('course.payment_2') }}
                                     </div>
                                     <div class="flex items-center gap-2">
                                         <svg width="16" height="16" fill="#7CF8C4" viewBox="0 0 24 24">
                                             <path d="M9 16.17 4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
                                         </svg>
-                                        Downloadable resources
+                                        {{ t('course.payment_3') }}
                                     </div>
                                     <div class="flex items-center gap-2">
                                         <svg width="16" height="16" fill="#7CF8C4" viewBox="0 0 24 24">
                                             <path d="M9 16.17 4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
                                         </svg>
-                                        Mentor Q&A forum access
+                                        {{ t('course.payment_4') }}
                                     </div>
                                 </div>
 
                                 <div class="h-px bg-white/10 my-1"></div>
                                 <div class="w-full text-center cursor-pointer px-4 py-3 rounded-lg font-semibold text-white border border-white/20 bg-sky-700"
                                     v-if="courseStatus && courseStatus == 'free'">
-                                    Free </div>
+                                    {{ t('course.free') }} </div>
 
                                 <div class="w-full text-center cursor-pointer px-4 py-3 rounded-lg font-semibold text-white border border-white/20 bg-sky-700"
                                     v-else-if="courseStatus && courseStatus != 'rejected' && courseStatus != 'free'">
-                                    {{ courseStatus == 'pending' ? 'Reviewing your payment...' : 'Paid' }}
+                                    {{ courseStatus == 'pending' ? t('course.payment_review') : t('course.paid') }}
                                 </div>
 
                                 <button v-else
                                     class="cursor-pointer w-full px-4 py-3 rounded-lg font-semibold text-white border border-white/20 bg-sky-800"
                                     @click="openBuyModal">
-                                    Buy course
+                                    {{ t('course.buy_course') }}
                                 </button>
 
                                 <!-- Take Quiz button -->
                                 <button v-show="courseStatus && (courseStatus == 'approved' || courseStatus == 'free')"
                                     class="cursor-pointer w-full mt-2 px-4 py-3 rounded-lg font-semibold text-white border border-white/20 bg-indigo-700 hover:bg-indigo-800"
                                     @click="openQuizModal" v-if="!isPassed">
-                                    Take Quiz
+                                    {{ t('course.take_quiz') }}
                                 </button>
                                 <a v-if="courseStatus && (courseStatus == 'approved' || courseStatus == 'free')"
+                                    v-show="isPassed"
                                     class="block text-center cursor-pointer w-full mt-2 px-4 py-3 rounded-lg font-semibold text-white border border-white/20 bg-indigo-700 hover:bg-indigo-800"
                                     :href="`/get/certificate/${course.id}`">
-                                    Get Certificate
+                                    {{ t('course.get_certificate') }}
                                 </a>
 
                                 <div class="flex items-center gap-2 text-[#9AA6D7] text-xs mt-3">
                                     <svg width="16" height="16" fill="#AFC7FF" viewBox="0 0 24 24">
                                         <path d="M12 1 3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z" />
                                     </svg>
-                                    We will review and respond within 24 hours to your payment
+                                    {{ t('course.terms') }}
                                 </div>
                             </div>
                         </div>
@@ -573,7 +575,7 @@ onMounted(async () => {
                         <div class="rounded-2xl overflow-hidden border border-white/10 shadow-[0_10px_30px_rgba(0,0,0,0.35),_0_2px_6px_rgba(0,0,0,0.2)]"
                             style="background:linear-gradient(180deg,#1b2240,#141b33);">
                             <div class="px-4 py-3 border-b border-white/10">
-                                <div class="font-extrabold text-white">Instructor</div>
+                                <div class="font-extrabold text-white">{{ t('course.instructor') }}</div>
                             </div>
                             <div class="flex items-center gap-3 p-4">
                                 <img class="w-12 h-12 rounded-xl border border-white/10 bg-center bg-cover"
@@ -582,21 +584,26 @@ onMounted(async () => {
                                     <div class="text-white font-semibold">{{ course.instructor.name }}</div>
                                     <div class="text-[#9AA6D7] text-sm">{{ course.instructor.title }} • {{
                                         course.instructor.courses.length
-                                        }} Courses</div>
+                                        }} {{ t('course.courses') }}</div>
                                 </div>
                             </div>
+                            <a class="rounded-md text-center bg-sky-800 p-3 block cursor-pointer"
+                            :href="`/make/chat/${course.instructor.id}`"
+                            >
+                                {{ t('course.chat_instructor') }}
+                            </a>
                         </div>
 
                         <!-- Quiz Progress -->
                         <div class="rounded-2xl overflow-hidden border border-white/10 shadow-[0_10px_30px_rgba(0,0,0,0.35),_0_2px_6px_rgba(0,0,0,0.2)]"
                             style="background:linear-gradient(180deg,#1b2240,#141b33);">
                             <div class="px-4 py-3 border-b border-white/10 flex items-center justify-between">
-                                <div class="font-extrabold text-white">Quiz Progress</div>
+                                <div class="font-extrabold text-white">{{ t('course.quiz_progress') }}</div>
                                 <span :class="[
                                     'text-xs px-2 py-1 rounded-md border',
                                     isPassed ? 'text-emerald-200 border-emerald-300/40 bg-emerald-300/10' : 'text-pink-200 border-pink-300/40 bg-pink-300/10'
                                 ]">
-                                    {{ isPassed ? 'Passed' : 'Not Passed' }}
+                                    {{ isPassed ? t('course.passed') : t('course.not_passed') }}
                                 </span>
                             </div>
 
@@ -620,7 +627,7 @@ onMounted(async () => {
                                         </defs>
                                     </svg>
                                     <div>
-                                        <div class="text-white font-semibold">Score</div>
+                                        <div class="text-white font-semibold">{{ t('course.score') }}</div>
                                         <div class="text-[#C5CFEE] text-sm">{{ normalizedScore }}</div>
                                     </div>
                                 </div>
@@ -644,7 +651,7 @@ onMounted(async () => {
                                         </defs>
                                     </svg>
                                     <div>
-                                        <div class="text-white font-semibold">Passing Score</div>
+                                        <div class="text-white font-semibold">{{ t('course.passing_score') }}</div>
                                         <div class="text-[#C5CFEE] text-sm">{{ normalizedPassing }}</div>
                                     </div>
                                 </div>
@@ -652,7 +659,7 @@ onMounted(async () => {
 
                             <!-- Raw values display -->
                             <div class="px-4 pb-4 text-[#9AA6D7] text-xs">
-                                Your Scorecompser run dev: {{ (quizScore ?? 0) }} / {{ (quizTotalScore ?? 0) }}
+                                {{ t('course.your_score') }}: {{ (quizScore ?? 0) }} / {{ (quizTotalScore ?? 0) }}
                             </div>
                         </div>
                     </aside>
@@ -661,10 +668,10 @@ onMounted(async () => {
         </main>
 
         <!-- Toast -->
-        <div ref="toastEl"
+        <!-- <div ref="toastEl"
             class="fixed left-1/2 -translate-x-1/2 bottom-24 opacity-0 pointer-events-none px-3 py-2 rounded-xl text-white border border-white/20 transition shadow-[0_10px_30px_rgba(0,0,0,0.35)] bg-[linear-gradient(180deg,#1b2240,#141b33)]">
             This lesson is locked. Buy the course to continue watching.
-        </div>
+        </div> -->
 
         <!-- BUY MODAL -->
         <div v-show="buyModalOpen"
@@ -673,9 +680,9 @@ onMounted(async () => {
             <div
                 class="w-full max-w-lg rounded-2xl overflow-hidden border border-white/10 shadow-[0_10px_30px_rgba(0,0,0,0.35)] bg-[linear-gradient(180deg,#1b2240,#141b33)]">
                 <div class="flex items-center justify-between px-4 py-3 border-b border-white/10">
-                    <div class="font-extrabold text-white">Complete your purchase</div>
+                    <div class="font-extrabold text-white">{{ t('course.complete_purchase') }}</div>
                     <button class="px-3 py-1 rounded-full border border-white/10 text-white"
-                        @click="closeBuyModal">Close</button>
+                        @click="closeBuyModal">{{ t('course.close') }}</button>
                 </div>
 
                 <div class="p-4 gap-4">
@@ -688,20 +695,20 @@ onMounted(async () => {
 
                     <div class="my-2">
                         <p class="flex justify-between my-1">
-                            <span class="text-lg">Course Code</span>
+                            <span class="text-lg">{{ t('course.course_code') }}</span>
                             <span>{{ course.course_code }}</span>
                         </p>
                         <p class="flex justify-between my-1">
-                            <span class="text-lg">Course Title</span>
+                            <span class="text-lg">{{ t('course.course_title') }}</span>
                             <span>{{ course.title }}</span>
                         </p>
                         <p class="flex justify-between my-1">
-                            <span class="text-lg">Total Lessons</span>
+                            <span class="text-lg">{{ t('course.total_lessons') }}</span>
                             <span>{{ course.lessons.length }}</span>
                         </p>
                         <p class="flex justify-between my-1">
-                            <span class="text-lg">Course Price</span>
-                            <span>{{ course.price }} MMK</span>
+                            <span class="text-lg">{{ t('course.course_price') }}<</span>
+                            <span>{{ course.price }} {{ t('course.mmk') }}</span>
                         </p>
                     </div>
                     <hr class="my-2 border-sky-200">
@@ -710,39 +717,37 @@ onMounted(async () => {
                         <input type="hidden" name="course_id" :value="course.id" />
                         <input type="hidden" name="fee" :value="course.price" />
                         <div>
-                            <label class="block text-sm text-white mb-1">Upload payment screenshot</label>
+                            <label class="block text-sm text-white mb-1">{{ t('course.upload_ss') }}</label>
                             <input type="file" accept="image/*" @change="onFileChange" class="block w-full text-white file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border file:border-white/10 file:bg-[#1b2240] file:text-white file:cursor-pointer
                             border border-white/10 rounded-lg bg-[#0b1024] p-2" />
                             <p v-if="form.errors.proof" class="text-pink-300 text-xs mt-1">{{ form.errors.proof }}</p>
                         </div>
                         <div>
-                            <label class="block text-sm text-white mb-1">Note (optional)</label>
-                            <textarea v-model="form.note" rows="3" placeholder="Any details about your payment..."
+                            <label class="block text-sm text-white mb-1">{{ t('course.note_optional') }}</label>
+                            <textarea v-model="form.note" rows="3" :placeholder="t('course.purchase_placeholder')"
                                 class="w-full bg-[#0b1024] border border-white/10 rounded-lg px-3 py-2 text-white placeholder:text-[#9AA6D7]"></textarea>
                         </div>
                         <small class="text-sky-500">
-                            After submitting your payment and uploading the proof (such as a screenshot or receipt), our
-                            team
-                            will review and confirm your payment within 24 hours.
+                            {{ t('course.purchase_tip') }}
                         </small>
                         <small class=" text-sky-700 text-center block">
-                            Contact Mail - staff@skillforge.com
+                            {{ t('course.email') }}
                         </small>
                         <small class=" text-sky-700 text-center block">
-                            Contact Phone - 09978114491
+                           {{ t('course.phone') }}
                         </small>
                         <button type="submit" :disabled="form.processing || stripeProcessing"
                             class="w-full mt-3 px-4 bg-sky-800 py-3 rounded-lg font-semibold text-white border border-white/20 disabled:opacity-60">
-                            {{ form.processing ? 'Submitting...' : 'Submit' }}
+                            {{ form.processing ? t('course.submitting') : t('course.submit')  }}
                         </button>
-                        <h3 class="text-center">Or</h3>
+                        <h3 class="text-center">{{ t('course.or') }}</h3>
                     </form>
                     <form @submit.prevent="submitPaymentWithStripe">
                         <input type="hidden" name="course_id" :value="course.id" />
                         <input type="hidden" name="fee" :value="course.price" />
                         <button type="submit" :disabled="stripeProcessing || form.processing"
                             class="w-full mt-3 px-4 bg-sky-800 py-3 rounded-lg font-semibold text-white border border-white/20 disabled:opacity-60">
-                            {{ stripeProcessing ? 'Redirecting...' : 'Pay with Card' }}
+                            {{ stripeProcessing ? t('course.redirecting') : t('course.pay_card') }}
 
                         </button>
                     </form>
@@ -761,10 +766,10 @@ onMounted(async () => {
                 <div
                     class="sticky top-0 z-10 flex items-center justify-between px-4 py-3 border-b border-white/10 bg-[linear-gradient(180deg,#1b2240,#141b33)]">
                     <div class="font-extrabold text-white">
-                        {{ quizLoading ? 'Loading quiz...' : (quiz?.title || 'Course Quiz') }}
+                        {{ quizLoading ? 'Loading quiz...' : (locale == 'my' ? quiz?.mm_title : quiz?.title || 'Course Quiz') }}
                     </div>
                     <button class="px-3 py-1 rounded-full border border-white/10 text-white"
-                        @click="closeQuizModal">Close</button>
+                        @click="closeQuizModal">{{ t('course.close') }}</button>
                 </div>
 
                 <!-- Scrollable content area -->
@@ -795,16 +800,16 @@ onMounted(async () => {
                             <button type="button"
                                 class="px-4 py-2 rounded-lg font-semibold border border-white/10 text-white"
                                 style="background:linear-gradient(180deg,#1b2240,#141b33);" @click="closeQuizModal">
-                                Cancel
+                                {{ t('course.cancel') }}
                             </button>
                             <button type="submit"
                                 class="px-4 py-2 rounded-lg font-semibold text-white border border-white/20 bg-sky-500">
-                                Submit Quiz
+                                {{ t('course.submit_quiz') }}
                             </button>
                         </div>
                     </form>
 
-                    <div v-else class="text-[#9AA6D7]">No quiz found for this course.</div>
+                    <div v-else class="text-[#9AA6D7]">{{ t('course.no_quiz') }}</div>
                 </div>
             </div>
         </div>

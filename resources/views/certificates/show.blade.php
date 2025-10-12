@@ -75,7 +75,7 @@
       width: 16mm;
       height: 16mm;
       border-radius: 4mm;
-      background: conic-gradient(from 200deg, var(--accent-1), var(--accent-2), var(--accent-3), var(--accent-1));
+      /* background: conic-gradient(from 200deg, var(--accent-1), var(--accent-2), var(--accent-3), var(--accent-1)); */
       box-shadow: 0 6px 16px rgba(91,140,255,0.35), inset 0 0 14px rgba(255,255,255,0.35);
     }
     .site-title {
@@ -239,7 +239,9 @@
     <section class="inner">
       <header class="brand">
         <div class="brand-left">
-          <div class="logo" aria-hidden="true"></div>
+          <div aria-hidden="true">
+            <img src="{{ asset('/app_logo.png') }}" class="logo" alt="">
+          </div>
           <div class="site-title">SkillForge LMS</div>
         </div>
         <div class="cert-badge">Certificate</div>

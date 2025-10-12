@@ -43,7 +43,7 @@ class QuizController{
                 'user_id' => Auth::id(),
                 'issue_number' => 'SF-' . str_pad($quizAttempt->id, 6, '0', STR_PAD_LEFT),
                 'issue_date' => now()->format('Y-m-d'),
-                'certificate_url' => config('app.url')."/get/certificate/".$quiz->course->id
+                'certificate_url' => config('app.url')."/get/certificate/"
             ]);
         }
 

@@ -11,4 +11,10 @@ class Category extends Model
         'slug',
         'description'
     ];
+
+        public function courses()
+    {
+        return $this->belongsToMany(Course::class, 'course_categories', 'category_id', 'course_id')
+            ->withTimestamps();
+    }
 }

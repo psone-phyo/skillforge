@@ -2,13 +2,16 @@
 import '../../css/frontend/style.css';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { dashboard } from '@/routes';
-// import { type BreadcrumbItem } from '@/types';
 import { Head } from '@inertiajs/vue3';
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import customParseFormat from 'dayjs/plugin/customParseFormat';
 import { ref } from 'vue';
-import PlaceholderPattern from '../components/PlaceholderPattern.vue';
+import { usePage } from '@inertiajs/vue3'
+import { useI18n } from '@/composables/useI18n';
+
+const page = usePage()
+const { t, locale } = useI18n();
 
 dayjs.extend(relativeTime)
 dayjs.extend(customParseFormat)
@@ -18,7 +21,6 @@ const props = defineProps({
     courses: Array,
     fileUrl: String,
 });
-
 
 const track = ref(null);
 
@@ -31,7 +33,7 @@ const scrollBy = (direction) => {
 </script>
 
 <template>
-  <Head title="Dashboard" />
+  <Head :title="t('dashboard.page_title')" />
 
   <AppLayout :breadcrumbs="breadcrumbs">
     <!-- Hero -->
@@ -40,12 +42,12 @@ const scrollBy = (direction) => {
         <!-- Left -->
         <div class="rounded-2xl border border-white/5 shadow-[0_10px_30px_rgba(0,0,0,0.35),_0_2px_6px_rgba(0,0,0,0.2)] p-6 md:p-7"
              style="background:linear-gradient(180deg, rgba(27,34,64,0.9), rgba(20,27,51,0.9));">
-          <p class="text-[#42E3B4] font-extrabold tracking-wide mb-2">Learn, Discuss, Grow</p>
+          <p class="text-[#42E3B4] font-extrabold tracking-wide mb-2">{{ t('dashboard.hero.kicker') }}</p>
           <h1 class="text-white text-3xl sm:text-4xl font-extrabold leading-tight mb-2">
-            Search courses and videos by topic, skill, or mentor
+            {{ t('dashboard.hero.title') }}
           </h1>
           <p class="text-[#8F9BB3] mb-4">
-            Join the community. Watch concise lessons, ask questions, and get feedback.
+            {{ t('dashboard.hero.subtitle') }}
           </p>
 
           <!-- Search -->
@@ -56,14 +58,14 @@ const scrollBy = (direction) => {
             <input
               id="searchInput"
               class="flex-1 bg-transparent outline-none text-white placeholder:text-[#AAB3D0] text-[15px]"
-              placeholder="Try: React hooks, Linear Regression, UI animations..."
+              :placeholder="t('dashboard.search.placeholder')"
             />
             <span class="hidden sm:inline bg-[#0b1024] border border-white/10 text-[#AAB3D0] px-2 py-1 rounded-md text-xs">/</span>
             <button class="px-3 py-2 rounded-lg font-semibold border border-white/10 text-white transition
                            hover:-translate-y-px
                            shadow-[0_10px_30px_rgba(0,0,0,0.35),_0_2px_6px_rgba(0,0,0,0.2)]"
                     style="background:linear-gradient(180deg, #1b2240, #141b33);">
-              Search
+              {{ t('dashboard.search.button') }}
             </button>
           </div>
 
@@ -72,7 +74,7 @@ const scrollBy = (direction) => {
             <div class="px-3 py-2 rounded-full font-semibold text-[13px] cursor-pointer transition
                         border border-white/10 text-white
                         bg-gradient-to-b from-[#1f2958] to-[#182145]">
-              All
+              {{ t('dashboard.chips.all') }}
             </div>
             <div
               v-for="category in props.categories"
@@ -93,19 +95,19 @@ const scrollBy = (direction) => {
             <div class="rounded-xl text-center p-3 border border-white/10
                         shadow-[0_10px_30px_rgba(0,0,0,0.35),_0_2px_6px_rgba(0,0,0,0.2)]"
                  style="background:linear-gradient(180deg, #1b2240, #141b33);">
-              <small class="block text-[#8F9BB3]">Courses</small>
+              <small class="block text-[#8F9BB3]">{{ t('dashboard.stats.courses') }}</small>
               <b class="block text-lg text-white">1,248</b>
             </div>
             <div class="rounded-xl text-center p-3 border border-white/10
                         shadow-[0_10px_30px_rgba(0,0,0,0.35),_0_2px_6px_rgba(0,0,0,0.2)]"
                  style="background:linear-gradient(180deg, #1b2240, #141b33);">
-              <small class="block text-[#8F9BB3]">Videos</small>
+              <small class="block text-[#8F9BB3]">{{ t('dashboard.stats.videos') }}</small>
               <b class="block text-lg text-white">15,930</b>
             </div>
             <div class="rounded-xl text-center p-3 border border-white/10
                         shadow-[0_10px_30px_rgba(0,0,0,0.35),_0_2px_6px_rgba(0,0,0,0.2)]"
                  style="background:linear-gradient(180deg, #1b2240, #141b33);">
-              <small class="block text-[#8F9BB3]">Learners</small>
+              <small class="block text-[#8F9BB3]">{{ t('dashboard.stats.learners') }}</small>
               <b class="block text-lg text-white">72k+</b>
             </div>
           </div>
@@ -117,8 +119,8 @@ const scrollBy = (direction) => {
                style="background:linear-gradient(180deg, #1b2240, #141b33);">
             <div class="h-[68px] rounded-lg border border-white/10 bg-[url('https://images.unsplash.com/photo-1518779578993-ec3579fee39f?q=80&w=600&auto=format&fit=crop')] bg-center bg-cover"></div>
             <div>
-              <h3 class="text-white font-semibold">Recommended: Modern React Patterns</h3>
-              <p class="text-[#8F9BB3] text-sm">Advanced hooks, server components, and performance practices.</p>
+              <h3 class="text-white font-semibold">{{ t('dashboard.preview.title') }}</h3>
+              <p class="text-[#8F9BB3] text-sm">{{ t('dashboard.preview.subtitle') }}</p>
             </div>
           </div>
         </div>
@@ -129,8 +131,8 @@ const scrollBy = (direction) => {
     <section class="pb-24 px-4">
       <div class="max-w-6xl mx-auto">
         <div class="flex items-center justify-between mb-3">
-          <h2 class="text-white text-xl font-bold">Trending Videos</h2>
-          <a href="#" class="text-[#AFC7FF] font-semibold">View all</a>
+          <h2 class="text-white text-xl font-bold">{{ t('dashboard.trending.title') }}</h2>
+          <a href="/courses" class="text-[#AFC7FF] font-semibold">{{ t('dashboard.trending.view_all') }}</a>
         </div>
 
         <div class="grid grid-cols-[auto_1fr_auto] items-center gap-2">
@@ -149,7 +151,6 @@ const scrollBy = (direction) => {
             ref="track"
             class="overflow-x-auto snap-x snap-mandatory flex gap-4 pb-2 [-ms-overflow-style:none] [scrollbar-width:none]"
           >
-
             <div
               v-for="course in courses"
               :key="course.id"
@@ -170,7 +171,7 @@ const scrollBy = (direction) => {
                     />
                     <div class="absolute left-2 top-2 px-2 py-1 rounded-full text-xs border border-white/20
                                 bg-black/50 backdrop-blur text-[#D9E2FF]">
-                      Programming
+                      {{ t('dashboard.trending.badge_category') }}
                     </div>
                   </div>
 
@@ -178,7 +179,7 @@ const scrollBy = (direction) => {
                     <div class="w-[34px] h-[34px] rounded-lg border border-white/10 bg-[#0b1024] shrink-0"></div>
                     <div class="flex-1">
                       <div class="text-white font-bold text-sm leading-snug line-clamp-2">
-                        {{ course.title }}
+                        {{ locale == 'my' ? course.mm_title : course.title}}
                       </div>
                       <div class="text-[#9AA6D7] text-xs flex items-center gap-2">
                         <span>{{ dayjs(course.published_at).fromNow() }}</span>

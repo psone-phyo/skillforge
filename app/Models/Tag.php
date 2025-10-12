@@ -10,4 +10,9 @@ class Tag extends Model
         'name',
         'slug',
     ];
+
+        public function courses()
+    {
+        return $this->belongsToMany(Course::class, 'course_tags', 'tag_id', 'course_id');
+    }
 }

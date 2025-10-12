@@ -1,14 +1,19 @@
 <?php
 
+use App\Events\MessageSent;
 use App\Http\Controllers\Frontend\ChatController;
+use App\Http\Controllers\Frontend\CourseController;
 use App\Http\Controllers\Frontend\DashboardController;
 use App\Http\Controllers\Frontend\PaymentController;
 use App\Http\Controllers\Frontend\QuizController;
 use App\Http\Controllers\Frontend\ReviewController;
 use App\Models\Course;
 use App\Models\Tag;
+use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 
@@ -58,7 +63,43 @@ Route::get('/course/{id}/quiz', [QuizController::class, 'get']);
 Route::post('/take-quiz', [QuizController::class, 'submit']);
 
 Route::get('/get/certificate/{course_id}', [DashboardController::class, 'getCertificate'])->name('get.certificate');
-Route::get('/chat', [ChatController::class, 'index'])->name('chat');
 
+Route::get('/send', function (){
+        //     $message = [
+        //     'chat_id' => 1,
+        //     'user_id' => Auth::id(),
+        //     'content' => 'hello',
+        // ];
 
+        event(new MessageSent('Hello'));
 
+        return response()->json('Hello from pusher');
+});
+
+Route::middleware(['auth'])->group(function () {
+    // Route::get('/messages/chat', [ChatController::class, 'index'])->name('chat.index');
+    Route::get('/chat', [ChatController::class, 'index'])->name('chat');
+    Route::get('/make/chat/{id}', [ChatController::class, 'makeChat'])->name('chat.make');
+
+    Route::post('/conversations/{conversation}/typing', [ChatController::class, 'typing']);
+
+    // API endpoints consumed by the Vue page
+    Route::get('/conversations', [ChatController::class, 'conversations'])->name('chat.conversations');
+    Route::get('/conversations/{id}/messages', [ChatController::class, 'messages'])->name('chat.messages');
+    Route::post('/messages', [ChatController::class, 'send'])->name('chat.send');
+    Route::post('/conversations/{id}/read', [ChatController::class, 'markRead'])->name('chat.read');
+});
+
+Route::get('/courses', [CourseController::class, 'index'])->name('courses.index');
+
+Route::get('/my-library', [DashboardController::class, 'myLibrary'])->name('library.index');
+Route::get('/lang/{locale}', function ($locale) {
+    if (! in_array($locale, ['en', 'my'])) {
+        abort(400);
+    }
+
+    Session::put('locale', $locale);
+    App::setLocale($locale);
+
+    return Redirect::back();
+})->name('lang.switch');

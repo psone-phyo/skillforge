@@ -7,7 +7,8 @@ import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
 import { ref, reactive, computed, onMounted, nextTick } from 'vue';
-// import axios from 'axios'; // Demo mode: keep commented so you can re-enable later
+import axios from 'axios';
+import Pusher from 'pusher-js';
 
 dayjs.extend(relativeTime);
 dayjs.extend(customParseFormat);
@@ -38,21 +39,19 @@ type Message = {
   attachments?: { id?: string|number; name: string; url?: string; size?: number }[];
   read_at?: string | null;
 };
+const props = defineProps<{
+    me: any
+}>();
+// Current user (replace with your auth prop if available)
+const me = ref<User | null>(props.me);
 
-// Demo user (pretend current user)
-const me = ref<User | null>({
-  id: 1,
-  name: 'You',
-  avatar: 'https://images.unsplash.com/photo-1607746882042-944635dfe10e?q=80&w=200&auto=format&fit=crop'
-});
-
-// Conversations list (demo)
+// Conversations list
 const conversations = ref<Conversation[]>([]);
 const conversationsLoading = ref(false);
 const conversationsSearch = ref('');
 const selectedConvId = ref<number | string | null>(null);
 
-// Messages (demo)
+// Messages
 const messages = ref<Message[]>([]);
 const messagesLoading = ref(false);
 const messagesEnd = ref(false);
@@ -64,15 +63,20 @@ const composing = reactive({
   text: '',
   files: [] as File[],
   sending: false,
-  typing: false,
 });
 
-const typingIndicator = ref(false);
-let typingTimer: any = null;
+
+// Partner typing indicator (only show when the OTHER user is typing)
+const partnerTyping = ref(false);
+let partnerTypingTimer: any = null;
 
 // Refs
 const listRef = ref<HTMLDivElement | null>(null);
 const fileInputRef = ref<HTMLInputElement | null>(null);
+
+// Pusher client and current channel
+const pusherRef = ref<Pusher | null>(null);
+let currentChannel: Pusher.Channel | null = null;
 
 // Derived
 const activeConversation = computed(() =>
@@ -90,7 +94,7 @@ const filteredConversations = computed(() => {
 
 function otherParty(conversation: Conversation): User | null {
   if (!me.value) return conversation.participants?.[0] || null;
-  return (conversation.participants || []).find(u => String(u.id) !== String(me.value!.id)) || conversation.participants?.[0] || null;
+  return (conversation.participants || []).find(u => String(u.id) !== String(me.value!.id)) || null;
 }
 function otherPartyName(conversation: Conversation): string {
   const u = otherParty(conversation);
@@ -100,115 +104,39 @@ function otherPartyAvatar(conversation: Conversation): string | undefined {
   return otherParty(conversation)?.avatar;
 }
 
-// DEMO HELPERS
-function demoConversations(): Conversation[] {
-  const instructorA: User = { id: 2, name: 'Alex Rivera (Instructor)', avatar: 'https://images.unsplash.com/photo-1547425260-76bcadfb4f2c?q=80&w=200&auto=format&fit=crop' };
-  const instructorB: User = { id: 3, name: 'Sofia Lee (Instructor)', avatar: 'https://images.unsplash.com/photo-1502685104226-ee32379fefbe?q=80&w=200&auto=format&fit=crop' };
-
-  return [
-    {
-      id: 101,
-      title: 'React Patterns — Q&A',
-      participants: [me.value!, instructorA],
-      last_message: { body: 'See you in the next session!', created_at: dayjs().subtract(10, 'minute').toISOString() },
-      unread_count: 0,
-      updated_at: dayjs().subtract(10, 'minute').toISOString(),
-      is_instructor: true
-    },
-    {
-      id: 102,
-      title: 'Data Science Mentoring',
-      participants: [me.value!, instructorB],
-      last_message: { body: 'Upload your notebook when ready.', created_at: dayjs().subtract(2, 'hour').toISOString() },
-      unread_count: 2,
-      updated_at: dayjs().subtract(2, 'hour').toISOString(),
-      is_instructor: true
-    }
-  ];
-}
-
-function demoMessages(conversationId: number | string, page: number): Message[] {
-  // page 1 returns latest; page 2 returns older; stop after page 2
-  const alex: User = { id: 2, name: 'Alex Rivera (Instructor)', avatar: 'https://images.unsplash.com/photo-1547425260-76bcadfb4f2c?q=80&w=200&auto=format&fit=crop' };
-  const sofia: User = { id: 3, name: 'Sofia Lee (Instructor)', avatar: 'https://images.unsplash.com/photo-1502685104226-ee32379fefbe?q=80&w=200&auto=format&fit=crop' };
-
-  if (conversationId === 101) {
-    if (page === 1) {
-      return [
-        { id: 'm-101-6', conversation_id: 101, sender: alex, body: 'See you in the next session!', created_at: dayjs().subtract(10, 'minute').toISOString() },
-        { id: 'm-101-5', conversation_id: 101, sender: me.value!, body: 'Great, thanks a lot!', created_at: dayjs().subtract(12, 'minute').toISOString() },
-        { id: 'm-101-4', conversation_id: 101, sender: alex, body: 'Yes, check the repo. I pushed an example of Suspense + SWR.', created_at: dayjs().subtract(15, 'minute').toISOString() },
-        { id: 'm-101-3', conversation_id: 101, sender: me.value!, body: 'Do we have a code sample for SWR integration?', created_at: dayjs().subtract(18, 'minute').toISOString() },
-        { id: 'm-101-2', conversation_id: 101, sender: alex, body: 'Welcome to React Patterns Q&A!', created_at: dayjs().subtract(25, 'minute').toISOString() },
-      ];
-    }
-    if (page === 2) {
-      return [
-        { id: 'm-101-1', conversation_id: 101, sender: me.value!, body: 'Hi Alex!', created_at: dayjs().subtract(1, 'day').toISOString() },
-      ];
-    }
-  }
-
-  if (conversationId === 102) {
-    if (page === 1) {
-      return [
-        { id: 'm-102-5', conversation_id: 102, sender: sofia, body: 'Upload your notebook when ready.', created_at: dayjs().subtract(2, 'hour').toISOString() },
-        { id: 'm-102-4', conversation_id: 102, sender: me.value!, body: 'Will do, thanks!', created_at: dayjs().subtract(2, 'hour').toISOString() },
-        { id: 'm-102-3', conversation_id: 102, sender: sofia, body: 'Try stratified split for better validation.', created_at: dayjs().subtract(3, 'hour').toISOString() },
-        { id: 'm-102-2', conversation_id: 102, sender: me.value!, body: 'I’m getting overfitting on the validation set.', created_at: dayjs().subtract(4, 'hour').toISOString() },
-        { id: 'm-102-1', conversation_id: 102, sender: sofia, body: 'Hey! How is the model training going?', created_at: dayjs().subtract(5, 'hour').toISOString() },
-      ];
-    }
-    if (page === 2) {
-      return [];
-    }
-  }
-
-  return [];
-}
-
-// API placeholders switched to DEMO data
+// Fetch current user if needed
 async function fetchCurrentUser() {
-  // DEMO: already set in `me`
-  // Real API:
-  // const { data } = await axios.get('/api/me');
-  // me.value = data;
+  // Wire to your auth source if needed
 }
 
+// Backend: conversations
 async function fetchConversations() {
   conversationsLoading.value = true;
   try {
-    // DEMO DATA
-    const data = demoConversations();
-    // Real API (commented):
-    // const { data } = await axios.get('/api/conversations', {
-    //   params: { q: conversationsSearch.value || undefined },
-    // });
-    conversations.value = data;
+    const { data } = await axios.get('/conversations', {
+      params: { q: conversationsSearch.value || undefined },
+    });
+    conversations.value = data || [];
     if (!selectedConvId.value && conversations.value.length) {
       selectConversation(conversations.value[0].id);
     }
-  } catch (e) {
-    // handle error UI if desired
   } finally {
     conversationsLoading.value = false;
   }
 }
 
+// Backend: messages (paged)
 async function fetchMessages(conversationId: number | string, page = 1) {
   if (messagesLoading.value || messagesEnd.value) return;
   messagesLoading.value = true;
   try {
-    // DEMO DATA
-    const items = demoMessages(conversationId, page);
-    // Real API (commented):
-    // const { data } = await axios.get(`/api/conversations/${conversationId}/messages`, {
-    //   params: { page, per_page: pageSize },
-    // });
-    // const items: Message[] = Array.isArray(data) ? data : (data?.data || []);
+    const { data } = await axios.get(`/conversations/${conversationId}/messages`, {
+      params: { page, per_page: pageSize },
+    });
 
+    const items: Message[] = Array.isArray(data) ? data : (data?.data || []);
     if (page === 1) {
-      messages.value = items.reverse();
+      messages.value = items.reverse(); // newest last
       await nextTick();
       scrollToBottom();
     } else {
@@ -220,17 +148,13 @@ async function fetchMessages(conversationId: number | string, page = 1) {
       if (el) el.scrollTop = newHeight - prevHeight;
     }
 
-    if (items.length < pageSize) {
+    if (!Array.isArray(data) && (!data?.meta?.next_page || items.length < pageSize)) {
       messagesEnd.value = true;
     }
     messagesPage.value = page;
 
-    // Mark as read (demo no-op)
-    // await axios.post(`/api/conversations/${conversationId}/read`);
-    const conv = conversations.value.find(c => c.id === conversationId);
-    if (conv) conv.unread_count = 0;
-  } catch (e) {
-    // handle
+    // Mark as read
+    await axios.post(`/conversations/${conversationId}/read`);
   } finally {
     messagesLoading.value = false;
   }
@@ -242,7 +166,45 @@ function selectConversation(id: number | string) {
   messages.value = [];
   messagesEnd.value = false;
   messagesPage.value = 1;
+  partnerTyping.value = false;
+  clearTimeout(partnerTypingTimer);
   void fetchMessages(id, 1);
+  subscribeToChannel(id);
+}
+
+// Pusher subscribe/unsubscribe
+function subscribeToChannel(conversationId: number | string) {
+  if (!pusherRef.value) return;
+
+  // Unsubscribe previous
+  if (currentChannel) {
+    try { pusherRef.value.unsubscribe(currentChannel.name); } catch {}
+    currentChannel = null;
+  }
+
+  const channelName = `chat.${conversationId}`;
+  const ch = pusherRef.value.subscribe(channelName);
+  currentChannel = ch;
+
+  // If server event uses broadcastAs('message.sent')
+  ch.bind('message.sent', (data: any) => {
+    if (String(selectedConvId.value) !== String(conversationId)) return;
+    messages.value = [...messages.value, data];
+    nextTick().then(scrollToBottom);
+  });
+
+  // Optional: partner typing (requires server to broadcast 'typing' from partner)
+  ch.bind('typing', (payload: any) => {
+    // Expect payload like { user_id: number, conversation_id: number }
+    if (!payload) return;
+    const isPartner = String(payload.user_id) !== String(me.value?.id);
+    const sameConv = String(payload.conversation_id) === String(selectedConvId.value);
+    if (isPartner && sameConv) {
+      partnerTyping.value = true;
+      clearTimeout(partnerTypingTimer);
+      partnerTypingTimer = setTimeout(() => (partnerTyping.value = false), 1500);
+    }
+  });
 }
 
 async function loadOlder() {
@@ -272,14 +234,27 @@ function onFilesSelected(e: Event) {
   composing.files = files ? Array.from(files).slice(0, 5) : [];
 }
 
+let typingDebounce: any = null;
 function onTyping() {
-  composing.typing = true;
-  if (typingTimer) clearTimeout(typingTimer);
-  typingIndicator.value = true;
-  typingTimer = setTimeout(() => {
-    typingIndicator.value = false;
-    composing.typing = false;
-  }, 1200);
+  // Emit typing to server (optional; implement a route to broadcast typing event)
+  // Debounce to avoid flooding
+  if (!pusherRef.value) return;
+  clearTimeout(typingDebounce);
+  typingDebounce = setTimeout(() => {
+    if (!selectedConvId.value) return;
+    const socketId = pusherRef.value!.connection.socket_id; // 👈 get the socket ID
+
+    // Uncomment when backend exists:
+    axios.post(`/conversations/${selectedConvId.value}/typing`, {
+      conversation_id: selectedConvId.value,
+      user_id: me.value?.id,
+    },
+      {
+        headers: {
+          'X-Socket-ID': socketId, // 👈 send it to Laravel
+        },
+      });
+  }, 250);
 }
 
 async function sendMessage() {
@@ -288,40 +263,54 @@ async function sendMessage() {
   const hasFiles = composing.files.length > 0;
   if (!text && !hasFiles) return;
 
+  const tempId = `temp-${Date.now()}`;
+  const tempMessage = {
+    id: tempId,
+    conversation_id: selectedConvId.value,
+    sender: me.value,
+    body: text,
+    created_at: new Date().toISOString(),
+    status: 'sending', // 👈 UX flag
+  };
+
+  // Show immediately
+  messages.value = [...messages.value, tempMessage];
+  await nextTick();
+  scrollToBottom();
+
   try {
     composing.sending = true;
+    const socketId = pusherRef.value?.connection.socket_id;
 
-    // DEMO: fabricate a new message locally
-    const newMsg: Message = {
-      id: 'local-' + Date.now(),
-      conversation_id: selectedConvId.value,
-      sender: me.value!,
-      body: text || '(attachment)',
-      created_at: new Date().toISOString(),
-      attachments: composing.files.map((f, i) => ({ id: i, name: f.name }))
-    };
+    const { data } = await axios.post(
+      '/messages',
+      {
+        conversation_id: selectedConvId.value,
+        body: text,
+      },
+      {
+        headers: {
+          'X-Socket-ID': socketId,
+        },
+      }
+    );
 
-    // Real API (commented):
-    // const form = new FormData();
-    // form.append('conversation_id', String(selectedConvId.value));
-    // if (text) form.append('body', text);
-    // composing.files.forEach((f, i) => form.append('attachments[]', f));
-    // const { data } = await axios.post('/api/messages', form, {
-    //   headers: { 'Content-Type': 'multipart/form-data' },
-    // });
-    // const newMsg: Message = data;
-
-    messages.value = [...messages.value, newMsg];
-    composing.text = '';
-    composing.files = [];
-    await nextTick();
-    scrollToBottom();
-  } catch (e) {
-    // handle error toast
+    // Replace the temporary message with the real one
+    messages.value = messages.value.map((m) =>
+      m.id === tempId ? data : m
+    );
+  } catch (err) {
+    // Mark as failed
+    messages.value = messages.value.map((m) =>
+      m.id === tempId ? { ...m, status: 'failed' } : m
+    );
   } finally {
     composing.sending = false;
+    composing.text = '';
+    composing.files = [];
   }
 }
+
 
 function fmtTime(ts: string) {
   return dayjs(ts).format('MMM D, HH:mm');
@@ -333,6 +322,17 @@ function isMine(m: Message) {
 onMounted(async () => {
   await fetchCurrentUser();
   await fetchConversations();
+
+  // Initialize Pusher client (use your real key/cluster)
+  pusherRef.value = new Pusher('9d48a6e508f9c81b7bdd', {
+    cluster: 'ap1',
+    forceTLS: true,
+  });
+
+  // Subscribe initial conversation if exists
+  if (selectedConvId.value) {
+    subscribeToChannel(selectedConvId.value!);
+  }
 });
 </script>
 
@@ -401,7 +401,7 @@ onMounted(async () => {
           </aside>
 
           <!-- Chat -->
-          <section class="rounded-2xl border border-white/10 bg-[linear-gradient(180deg,#1b2240,#141b33)] shadow-[0_10px_30px_rgba(0,0,0,0.35),_0_2px_6px_rgba(0,0,0,0.2)] flex flex-col min-h-[60vh]">
+          <section class="rounded-2xl border border-white/10 bg-[linear-gradient(180deg,#1b2240,#141b33)] shadow-[0_10px_30px_rgba(0,0,0,0.35),_0_2px_6px_rgba(0,0,0,0.2)] flex flex-col h-[80vh]">
             <!-- Header -->
             <div class="px-4 py-3 border-b border-white/10 flex items-center justify-between">
               <div class="flex items-center gap-3">
@@ -424,64 +424,64 @@ onMounted(async () => {
               </div>
             </div>
 
-            <!-- Messages -->
+            <!-- Messages (with animation) -->
             <div
               ref="listRef"
-              class="flex-1 overflow-y-auto px-3 py-4 space-y-2"
+              class="flex-1 overflow-y-auto px-3 py-4"
               @scroll.passive="onScrollMessages"
             >
-              <div v-if="messagesLoading && !messages.length" class="text-[#9AA6D7] text-sm px-2">
-                Loading messages…
-              </div>
-
-              <div v-if="!messagesLoading && !messages.length && activeConversation" class="text-[#9AA6D7] text-sm px-2">
-                Say hello to start the conversation.
-              </div>
-
-              <div v-if="messagesLoading && messages.length" class="text-center text-[#9AA6D7] text-xs py-1">
-                Loading older messages…
-              </div>
-
-              <div
-                v-for="m in messages"
-                :key="m.id"
-                class="flex items-end gap-2"
-                :class="isMine(m) ? 'justify-end pl-12' : 'justify-start pr-12'"
-              >
-                <img
-                  v-if="!isMine(m)"
-                  :src="m.sender.avatar || 'https://placehold.co/80x80/1b2240/FFFFFF?text=SF'"
-                  class="w-8 h-8 rounded-lg border border-white/10 object-cover"
-                />
+              <transition-group name="msg" tag="div" class="space-y-2">
                 <div
-                  :class="[
-                    'max-w-[78%] rounded-2xl px-3 py-2 border text-sm leading-relaxed',
-                    isMine(m)
-                      ? 'bg-[#5B8CFF] text-white border-white/10 rounded-br-md'
-                      : 'bg-[#101733] text-white border-white/10 rounded-bl-md'
-                  ]"
+                  v-for="m in messages"
+                  :key="m.id"
+                  class="flex items-end gap-2"
+                  :class="isMine(m) ? 'justify-end pl-12' : 'justify-start pr-12'"
                 >
-                  <div v-if="m.attachments?.length" class="mb-1 space-y-1">
-                    <a
-                      v-for="att in m.attachments"
-                      :key="att.id || att.name"
-                      :href="att.url"
-                      target="_blank"
-                      class="block text-xs underline text-[#D9E2FF]"
-                    >
-                      {{ att.name }}
-                    </a>
-                  </div>
-                  <div v-if="m.body">{{ m.body }}</div>
-                  <div class="text-[11px] opacity-70 mt-1">
-                    {{ fmtTime(m.created_at) }}
+                  <img
+                    v-if="!isMine(m)"
+                    :src="m.sender.avatar || 'https://placehold.co/80x80/1b2240/FFFFFF?text=SF'"
+                    class="w-8 h-8 rounded-lg border border-white/10 object-cover"
+                  />
+                  <div
+                    :class="[
+                      'max-w-[78%] rounded-2xl px-3 py-2 border text-sm leading-relaxed relative',
+                      isMine(m)
+                        ? 'bg-[#5B8CFF] text-white border-white/10 rounded-br-md'
+                        : 'bg-[#101733] text-white border-white/10 rounded-bl-md'
+                    ]"
+                  >
+                    <!-- bubble tail -->
+                    <span
+                      :class="[
+                        'absolute bottom-0 w-3 h-3',
+                        isMine(m) ? 'right-[-6px] bg-[#5B8CFF] rounded-br-sm' : 'left-[-6px] bg-[#101733] rounded-bl-sm'
+                      ]"
+                      style="clip-path: polygon(0 100%, 100% 100%, 100% 0); border: 1px solid rgba(255,255,255,0.1)"
+                    ></span>
+
+                    <div v-if="m.attachments?.length" class="mb-1 space-y-1">
+                      <a
+                        v-for="att in m.attachments"
+                        :key="att.id || att.name"
+                        :href="att.url"
+                        target="_blank"
+                        class="block text-xs underline text-[#D9E2FF]"
+                      >
+                        {{ att.name }}
+                      </a>
+                    </div>
+                    <div v-if="m.body">{{ m.body }}</div>
+                    <div class="text-[11px] opacity-70 mt-1 text-right">
+                      {{ fmtTime(m.created_at) }}
+                    </div>
                   </div>
                 </div>
-              </div>
+              </transition-group>
 
-              <div v-if="typingIndicator && activeConversation" class="flex items-center gap-2 text-[#9AA6D7] text-xs px-2 pt-1">
+              <!-- Partner typing (left side only) -->
+              <div v-if="partnerTyping && activeConversation" class="flex items-center gap-2 text-[#9AA6D7] text-xs px-2 pt-1 justify-start">
                 <span class="inline-flex w-2 h-2 rounded-full bg-[#9AA6D7] animate-pulse"></span>
-                Typing…
+                {{ otherPartyName(activeConversation) }} is typing…
               </div>
             </div>
 
@@ -531,3 +531,19 @@ onMounted(async () => {
     </main>
   </AppLayout>
 </template>
+
+<style scoped>
+/* Message appear animation */
+.msg-enter-active,
+.msg-leave-active {
+  transition: all 220ms ease;
+}
+.msg-enter-from {
+  opacity: 0;
+  transform: translateY(8px);
+}
+.msg-leave-to {
+  opacity: 0;
+  transform: translateY(-6px);
+}
+</style>

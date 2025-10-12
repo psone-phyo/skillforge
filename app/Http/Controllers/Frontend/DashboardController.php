@@ -109,4 +109,77 @@ class DashboardController
             return back();
         }
     }
+
+    public function myLibrary(Request $request)
+    {
+        $userId = Auth::id();
+
+        // Purchases (approved)
+        $purchases = Payment::query()
+            ->where('user_id', $userId)
+            ->where('status', 'approved')
+            ->with(['course' => function ($q) {
+                $q->select('id', 'title', 'sub_title', 'level', 'language', 'thumbnail_url', 'slug', 'course_code', 'is_paid', 'price');
+            }])
+            ->orderByDesc('purchased_at')
+            ->get()
+            ->map(function ($p) {
+                return [
+                    'id'           => $p->id,
+                    'course_id'    => $p->course_id,
+                    'ref'          => $p->ref,
+                    'course_fee'   => $p->course_fee,
+                    'total_amount' => $p->total_amount,
+                    'payment_method'=> $p->payment_method,
+                    'purchased_at' => optional($p->purchased_at)->toIso8601String(),
+                    'course'       => [
+                        'id'            => $p->course->id ?? null,
+                        'title'         => $p->course->title ?? null,
+                        'mm_title'         => $p->course->mm_title ?? null,
+                        'sub_title'     => $p->course->sub_title ?? null,
+                        'mm_sub_title'     => $p->course->mm_sub_title ?? null,
+                        'slug'          => $p->course->slug ?? null,
+                        'course_code'   => $p->course->course_code ?? null,
+                        'level'         => $p->course->level ?? null,
+                        'language'      => $p->course->language ?? null,
+                        'thumbnail_url' => $p->course->thumbnail_url ?? null,
+                        'is_paid'       => $p->course->is_paid ?? false,
+                        'price'         => $p->course->price ?? null,
+                    ],
+                ];
+            });
+
+        // Certificates
+        $certificates = Certificate::query()
+            ->where('user_id', $userId)
+            ->with(['course' => function ($q) {
+                $q->select('id', 'title', 'slug', 'thumbnail_url', 'course_code', 'level', 'language');
+            }])
+            ->orderByDesc('created_at')
+            ->get()
+            ->map(function ($c) {
+                return [
+                    'id'             => $c->id,
+                    'course_id'      => $c->course_id,
+                    'issue_number'   => $c->issue_number,
+                    'issue_date'     => $c->issue_date,
+                    'certificate_url'=> $c->certificate_url,
+                    'course'         => [
+                        'id'            => $c->course->id ?? null,
+                        'title'         => $c->course->title ?? null,
+                        'mm_title'         => $c->course->mm_title ?? null,
+                        'slug'          => $c->course->slug ?? null,
+                        'course_code'   => $c->course->course_code ?? null,
+                        'level'         => $c->course->level ?? null,
+                        'language'      => $c->course->language ?? null,
+                        'thumbnail_url' => $c->course->thumbnail_url ?? null,
+                    ],
+                ];
+            });
+
+        return Inertia::render('MyLibrary', [
+            'purchases'   => $purchases,
+            'certificates'=> $certificates,
+        ]);
+    }
 }

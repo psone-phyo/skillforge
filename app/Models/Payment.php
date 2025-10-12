@@ -23,4 +23,9 @@ class Payment extends Model
         'note',
         'status'
     ];
+
+        public function course()
+    {
+        return $this->belongsTo(Course::class, 'course_id');
+    }
 }
