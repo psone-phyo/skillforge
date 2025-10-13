@@ -1,6 +1,7 @@
 <?php
 
 use App\Events\MessageSent;
+use App\Http\Controllers\ChatBotController;
 use App\Http\Controllers\Frontend\ChatController;
 use App\Http\Controllers\Frontend\CourseController;
 use App\Http\Controllers\Frontend\DashboardController;
@@ -111,3 +112,6 @@ Route::get('/lang/{locale}', function ($locale) {
 
 Route::get('/send/otp/{id}', [OtpController::class, 'send'])->name('otp.send');
 Route::post('/verify/otp', [OtpController::class, 'verify'])->name('otp.verify');
+
+Route::get('/api/chatbot/history', [ChatBotController::class, 'history'])->name('chatbot.history');
+Route::post('/api/chatbot/message', [ChatBotController::class, 'message'])->name('chatbot.message');
