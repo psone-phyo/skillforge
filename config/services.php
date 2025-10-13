@@ -36,11 +36,13 @@ return [
     ],
 
     'stripe' => [
-    'key' => env('STRIPE_KEY'),
-    'secret' => env('STRIPE_SECRET'),
-],
+        'key' => env('STRIPE_KEY'),
+        'secret' => env('STRIPE_SECRET'),
+    ],
     'gemini' => [
-        'key' => env('GEMINI_API_KEY'),
+        'key'        => env('GEMINI_API_KEY'),
+        'gen_model'  => env('GEMINI_GENERATION_MODEL', 'models/gemini-2.0-flash-lite-latest'),
+        'embed_model' => env('GEMINI_EMBEDDING_MODEL', 'models/text-embedding-004'),
     ],
 
 ];
