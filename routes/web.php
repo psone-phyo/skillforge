@@ -4,17 +4,22 @@ use App\Events\MessageSent;
 use App\Http\Controllers\Frontend\ChatController;
 use App\Http\Controllers\Frontend\CourseController;
 use App\Http\Controllers\Frontend\DashboardController;
+use App\Http\Controllers\Frontend\OtpController;
 use App\Http\Controllers\Frontend\PaymentController;
 use App\Http\Controllers\Frontend\QuizController;
 use App\Http\Controllers\Frontend\ReviewController;
+use App\Mail\OtpMail;
 use App\Models\Course;
 use App\Models\Tag;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 
 Route::get('/', function () {
@@ -103,3 +108,6 @@ Route::get('/lang/{locale}', function ($locale) {
 
     return Redirect::back();
 })->name('lang.switch');
+
+Route::get('/send/otp/{id}', [OtpController::class, 'send'])->name('otp.send');
+Route::post('/verify/otp', [OtpController::class, 'verify'])->name('otp.verify');
