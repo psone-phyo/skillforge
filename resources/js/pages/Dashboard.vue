@@ -20,6 +20,7 @@ const props = defineProps({
     categories: Array,
     courses: Array,
     fileUrl: String,
+    instructor_status: String,
 });
 
 const track = ref(null);
@@ -36,6 +37,10 @@ const scrollBy = (direction) => {
   <Head :title="t('dashboard.page_title')" />
 
   <AppLayout :breadcrumbs="breadcrumbs">
+    <div class="top-0 w-full text-center text-yellow-100 mt-1" v-show="instructor_status === 'pending'">
+        Your Instructor application is under review. We will notify you once it's approved...
+        <hr>
+    </div>
     <!-- Hero -->
     <section class="py-12 px-1">
       <div class="max-w-6xl mx-auto grid gap-6 md:grid-cols-[1.2fr_.8fr]">
@@ -165,7 +170,7 @@ const scrollBy = (direction) => {
                 >
                   <div class="relative h-[140px] bg-[#0d1328]">
                     <img
-                      :src="fileUrl + course.thumbnail_url"
+                      :src="course.thumbnail_url"
                       alt="Course thumbnail"
                       class="w-full h-full object-cover"
                     />

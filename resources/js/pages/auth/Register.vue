@@ -62,33 +62,69 @@ function onCvChange(e: Event) {
           <InputError :message="errors.role" class="mt-2" />
         </div>
 
+        <!-- Name -->
         <div class="grid gap-2">
           <Label for="name">Name</Label>
-          <Input id="name" type="text" required autofocus :tabindex="1" autocomplete="name" name="name" placeholder="Full name" />
+          <input
+            id="name"
+            type="text"
+            required
+            autofocus
+            :tabindex="1"
+            autocomplete="name"
+            name="name"
+            placeholder="Full name"
+            class="w-full appearance-none rounded-lg border border-white/10 bg-[#0b1024] px-3 py-2 text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#2e3c77]"
+          />
           <InputError :message="errors.name" />
         </div>
 
+        <!-- Email -->
         <div class="grid gap-2">
           <Label for="email">Email address</Label>
-          <Input id="email" type="email" required :tabindex="2" autocomplete="email" name="email" placeholder="email@example.com" />
+          <input
+            id="email"
+            type="email"
+            required
+            :tabindex="2"
+            autocomplete="email"
+            name="email"
+            placeholder="email@example.com"
+            class="w-full appearance-none rounded-lg border border-white/10 bg-[#0b1024] px-3 py-2 text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#2e3c77]"
+          />
           <InputError :message="errors.email" />
         </div>
 
+        <!-- Category -->
         <div class="grid gap-2">
           <Label for="category">Category</Label>
-          <select
-            id="category"
-            name="interest_id"
-            v-model="selectedCategory"
-            required
-            class="border border-black/10 rounded-lg px-3 py-2 bg-transparent text-white"
-          >
-            <option value="">Select a category</option>
-            <option v-for="category in props.categories" :key="category.id" :value="category.id">
-              {{ category.name }}
-            </option>
-          </select>
-          <!-- If your backend uses 'interest_id' error key, swap below accordingly -->
+          <div class="relative">
+            <select
+              id="category"
+              name="interest_id"
+              v-model="selectedCategory"
+              required
+              class="w-full appearance-none rounded-lg border border-white/10 bg-[#0b1024] px-3 py-2 text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#2e3c77]"
+            >
+              <option value="" disabled>Select a category</option>
+              <option
+                v-for="category in props.categories"
+                :key="category.id"
+                :value="category.id"
+              >
+                {{ category.name }}
+              </option>
+            </select>
+            <svg
+              class="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              viewBox="0 0 24 24"
+            >
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6 9l6 6 6-6" />
+            </svg>
+          </div>
           <InputError :message="errors.interest_id || errors.category_id" />
         </div>
 
@@ -100,7 +136,7 @@ function onCvChange(e: Event) {
             name="proposal"
             required
             rows="4"
-            class="w-full rounded-lg border border-white/10 bg-[#0b1024] px-3 py-2 text-white"
+            class="w-full rounded-lg border border-white/10 bg-[#0b1024] px-3 py-2 text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#2e3c77]"
             placeholder="Tell us briefly about your expertise and what you plan to teach."
           ></textarea>
           <InputError :message="errors.proposal" />
@@ -113,22 +149,42 @@ function onCvChange(e: Event) {
             name="cv"
             type="file"
             required
-            accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-            class="block w-full cursor-pointer rounded-lg border border-white/10 bg-[#0b1024] px-3 py-2 text-white file:mr-4 file:rounded-md file:border-0 file:bg-[#1b2240] file:px-3 file:py-1 file:text-white"
+            accept=".pdf,.jpg,.png"
+            class="block w-full cursor-pointer rounded-lg border border-white/10 bg-[#0b1024] px-3 py-2 text-white file:mr-4 file:rounded-md file:border-0 file:bg-[#1b2240] file:px-3 file:py-1 file:text-white focus:outline-none focus:ring-2 focus:ring-[#2e3c77]"
             @change="onCvChange"
           />
           <InputError :message="errors.cv" />
         </div>
 
+        <!-- Password -->
         <div class="grid gap-2">
           <Label for="password">Password</Label>
-          <Input id="password" type="password" required :tabindex="3" autocomplete="new-password" name="password" placeholder="Password" />
+          <input
+            id="password"
+            type="password"
+            required
+            :tabindex="3"
+            autocomplete="new-password"
+            name="password"
+            placeholder="Password"
+            class="w-full appearance-none rounded-lg border border-white/10 bg-[#0b1024] px-3 py-2 text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#2e3c77]"
+          />
           <InputError :message="errors.password" />
         </div>
 
+        <!-- Confirm password -->
         <div class="grid gap-2">
           <Label for="password_confirmation">Confirm password</Label>
-          <Input id="password_confirmation" type="password" required :tabindex="4" autocomplete="new-password" name="password_confirmation" placeholder="Confirm password" />
+          <input
+            id="password_confirmation"
+            type="password"
+            required
+            :tabindex="4"
+            autocomplete="new-password"
+            name="password_confirmation"
+            placeholder="Confirm password"
+            class="w-full appearance-none rounded-lg border border-white/10 bg-[#0b1024] px-3 py-2 text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#2e3c77]"
+          />
           <InputError :message="errors.password_confirmation" />
         </div>
 

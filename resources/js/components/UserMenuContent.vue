@@ -13,14 +13,14 @@ import { Link, router } from '@inertiajs/vue3';
 import { LogOut, Settings } from 'lucide-vue-next';
 
 interface Props {
-    user: User;
+    user: any;
 }
 
 const handleLogout = () => {
     router.flushAll();
 };
 
-defineProps<Props>();
+const props = defineProps<Props>();
 </script>
 
 <template>
@@ -35,6 +35,12 @@ defineProps<Props>();
             <Link class="block w-full" :href="edit()" prefetch as="button">
                 <Settings class="mr-2 h-4 w-4" />
                 Settings
+            </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem :as-child="true">
+            <Link class="block w-full" href="/admin" prefetch as="button" v-if="user.instructor && user.instructor.status == 'approved'">
+                <Settings class="mr-2 h-4 w-4" />
+                View Dashboard
             </Link>
         </DropdownMenuItem>
     </DropdownMenuGroup>

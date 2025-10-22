@@ -92,7 +92,7 @@ function switchLocale(code: string) {
                 </div>
 
                 <Link :href="dashboard()" class="flex items-center gap-x-2">
-                <AppLogo />
+                    <AppLogo />
                 </Link>
 
                 <!-- Desktop Menu -->

@@ -16,12 +16,15 @@ class OtpController extends Controller
         $user = User::find($id);
         $data = rand(100000, 999999);
         $email = $user->email;
-        session()->put("otp.$request->email", $data);
+        session()->put("otp.$email", $data);
         try {
-            Mail::to($email)->send(new OtpMail($data));
+            // if (!session("otp.$email")){
+                Mail::to($email)->send(new OtpMail($data));
+            // }
             return  Inertia::render('auth/VerifyOtp', compact('data', 'email', 'id'));
         } catch (\Exception $e) {
-            return '❌ Failed to send email: ' . $e->getMessage();
+            \Log::error($e);
+            return redirect()->back();
         }
     }
 
@@ -30,14 +33,21 @@ class OtpController extends Controller
         $email = $request->email;
         $user = User::find($request->id);
         $otp = session("otp.$email");
-        if ($code == $otp){
+        if($code == $otp){
             Auth::login($user);
+            $user->email_verified_at = now();
+            $user->save();
             return response()->json([
                 'message' => "Verification Succeeded",
-                'redirect' => Auth::user()->isStudent() ? '/dashboard' : '/admin/dashboard'
+                'redirect' => '/dashboard'
             ]);
         }else{
-            return response()->json([],400);
+            return response()->json([
+                'user' => $user->name,
+                'code' => $code,
+                'otp' => $otp,
+                'email' => $email
+            ],400);
         }
     }
 }

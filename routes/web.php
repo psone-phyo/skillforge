@@ -5,10 +5,12 @@ use App\Http\Controllers\ChatBotController;
 use App\Http\Controllers\Frontend\ChatController;
 use App\Http\Controllers\Frontend\CourseController;
 use App\Http\Controllers\Frontend\DashboardController;
+use App\Http\Controllers\Frontend\InstructorController;
 use App\Http\Controllers\Frontend\OtpController;
 use App\Http\Controllers\Frontend\PaymentController;
 use App\Http\Controllers\Frontend\QuizController;
 use App\Http\Controllers\Frontend\ReviewController;
+use App\Http\Controllers\OAuthController;
 use App\Mail\OtpMail;
 use App\Models\Course;
 use App\Models\Tag;
@@ -23,9 +25,10 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 
+// Route::middleware(['confirmed'])->group(function(){
 Route::get('/', function () {
     if(!Auth::check()){
-        return Inertia::render('Welcome');
+        return redirect('/login');
     }
     return to_route('dashboard');
 })->name('home');
@@ -34,7 +37,7 @@ Route::get('/', function () {
 //     return Inertia::render('Dashboard');
 // })->middleware(['auth', 'verified'])->name('dashboard');
 
-Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
+Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard')->middleware('confirmed');
 
 Route::get('/teacher/cv/{filename}', function ($filename) {
     $path = "private/{$filename}";
@@ -44,11 +47,7 @@ Route::get('/teacher/cv/{filename}', function ($filename) {
     }
 
     return Storage::download($path);
-})
-    ->name('teacher.cv.download');
-
-require __DIR__ . '/settings.php';
-require __DIR__ . '/auth.php';
+})->name('teacher.cv.download');
 
 // web.php
 Route::delete('/courses/{course}/tags/{tag}', function(Course $course, $tag){
@@ -109,9 +108,18 @@ Route::get('/lang/{locale}', function ($locale) {
 
     return Redirect::back();
 })->name('lang.switch');
+// });
 
 Route::get('/send/otp/{id}', [OtpController::class, 'send'])->name('otp.send');
 Route::post('/verify/otp', [OtpController::class, 'verify'])->name('otp.verify');
 
 Route::get('/api/chatbot/history', [ChatBotController::class, 'history'])->name('chatbot.history');
 Route::post('/api/chatbot/message', [ChatBotController::class, 'message'])->name('chatbot.message');
+
+Route::get('redirect/google', [OAuthController::class, 'redirectToGoogle'])->name('google.login');
+Route::get('callback/google', [OAuthController::class, 'handleGoogleCallback']);
+
+Route::post('send/proposal', [InstructorController::class, 'send']);
+
+require __DIR__ . '/settings.php';
+require __DIR__ . '/auth.php';

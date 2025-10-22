@@ -44,5 +44,11 @@ return [
         'gen_model'  => env('GEMINI_GENERATION_MODEL', 'models/gemini-2.0-flash-lite-latest'),
         'embed_model' => env('GEMINI_EMBEDDING_MODEL', 'models/text-embedding-004'),
     ],
+    'google' => [
+        'client_id' => env('GOOGLE_CLIENT_ID'),
+        'client_secret' => env('GOOGLE_CLIENT_SECRET'),
+        'redirect' => env('GOOGLE_REDIRECT_URI'),
+    ],
+
 
 ];

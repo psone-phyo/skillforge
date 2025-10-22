@@ -46,6 +46,7 @@ class RegisteredUserController extends Controller
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
+            'status' => 1
         ]);
         if ($request->role == Role::ID_STUDENT) {
             $student = Student::create([
@@ -69,7 +70,7 @@ class RegisteredUserController extends Controller
                 Proposal::create([
                     'proposal' => $request->proposal,
                     'cv' => config('filesystem.disks.r2.url').$cvPath,
-                    'user_id' => $user->id, // optional
+                    'instructor_id' => $user->id, // optional
                 ]);
             }
         }
@@ -78,8 +79,6 @@ class RegisteredUserController extends Controller
 
         // Auth::login($user);
 
-        return to_route('otp.send', [
-            'id' => $user->id
-        ]);
+        return redirect('/send/otp/'.$user->id);
     }
 }

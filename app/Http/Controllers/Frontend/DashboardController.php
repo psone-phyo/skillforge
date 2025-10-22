@@ -31,7 +31,8 @@ class DashboardController
         $categories = Category::all();
         $courses = Course::with(['tags', 'instructor'])->where('status', CourseStatus::ID_PUBLISHED)->get();
         $fileUrl = $this->fileUrl;
-        return Inertia::render('Dashboard', compact('categories', 'courses', 'fileUrl'));
+        $instructor_status = Auth::user()->instructor->status ?? 'none';
+        return Inertia::render('Dashboard', compact('categories', 'courses', 'fileUrl', 'instructor_status'));
     }
 
     public function show($id)

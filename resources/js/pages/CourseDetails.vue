@@ -261,6 +261,7 @@ const quizScore = ref<number>(
 // Passing score from course data
 const passingScore = ref<number>(Number(props.course?.quiz?.passing_score ?? 0));
 
+
 // Normalize both to [0,100]
 const normalizedScore = computed(() => Math.max(0, Math.min(100, Number(quizScore.value ?? 0))));
 const normalizedPassing = computed(() => Math.max(0, Math.min(100, passingScore.value)));
@@ -271,12 +272,12 @@ const C = 2 * Math.PI * R; // circumference
 
 const scoreDash = computed(() => ({
     dasharray: `${C}`,
-    dashoffset: `${C - (normalizedScore.value / 5) * C}`,
+    dashoffset: `${C - (normalizedScore.value / props.quizTotalScore) * C}`,
 }));
 
 const passDash = computed(() => ({
     dasharray: `${C}`,
-    dashoffset: `${C - (normalizedPassing.value / 5) * C}`,
+    dashoffset: `${C - (normalizedPassing.value / props.quizTotalScore) * C}`,
 }));
 
 // Optional: pass/fail status
@@ -480,7 +481,7 @@ onMounted(async () => {
 
                             <form class="gap-3 px-4 py-3 border-t border-white/10" @submit.prevent="submitReview">
                                 <div class="items-center gap-2 text-white">
-                                    <label for="ratingSelect" class="text-sm">Your rating</label>
+                                    <label for="ratingSelect" class="text-sm">{{ t('course.rating') }}</label>
                                     <select id="ratingSelect" name="rating" v-model.number="ratingSelect"
                                         class="bg-[#0b1024] border border-white/10 rounded-lg px-3 py-2 text-white">
                                         <option :value="5">★★★★★</option>
@@ -505,7 +506,7 @@ onMounted(async () => {
                     <aside class="space-y-4">
                         <div class="rounded-2xl overflow-hidden border border-white/10 shadow-[0_10px_30px_rgba(0,0,0,0.35),_0_2px_6px_rgba(0,0,0,0.2)]"
                             style="background:linear-gradient(180deg,#1b2240,#141b33);">
-                            <div class="h-40 bg-white bg-center bg-cover"></div>
+                            <img class="h-40 bg-white bg-center w-full" :src="course.thumbnail_url"/>
                             <div class="p-4 gap-2">
                                 <div class="text-white text-2xl font-extrabold">
                                     {{ course.is_paid ? course.price + ' ' + t('course.mmk') : t('course.free') }}
@@ -783,7 +784,7 @@ onMounted(async () => {
 
                         <div v-for="(q, qi) in quiz.quiz_questions" :key="q.id" class="grid gap-2">
                             <div class="text-white font-semibold">
-                                Q{{ qi + 1 }}. {{ q.title }}
+                                Q{{ qi + 1 }}. {{ q.question }}
                             </div>
                             <div class="grid gap-2">
                                 <label v-for="choice in q.options" :key="choice.id"

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import '../../css/frontend/style.css';
+// import '../../css/frontend/style.css';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Head } from '@inertiajs/vue3';
 import axios from 'axios';
@@ -105,6 +105,8 @@ async function submitOtp() {
       window.location.href = data.redirect;
     }
   } catch (err: any) {
+    console.log(err);
+
     // Surface server validation or generic error
     const msg =
       err?.response?.data?.message ||
@@ -140,7 +142,7 @@ async function resendOtp() {
 
 <template>
   <Head title="Verify OTP" />
-  <AppLayout :breadcrumbs="[{ title: 'Dashboard', href: dashboard().url }, { title: 'Verify OTP' }]">
+  <!-- <AppLayout> -->
     <main class="py-8">
       <div class="max-w-md mx-auto px-4">
         <div
@@ -203,5 +205,5 @@ async function resendOtp() {
         </div>
       </div>
     </main>
-  </AppLayout>
+  <!-- </AppLayout> -->
 </template>
